@@ -1,0 +1,24 @@
+{
+  "name": "tuio-websocket-bridge",
+  "version": "1.0.0",
+  "description": "WebSocket to TUIO/OSC bridge for web-based touch applications",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "tuio",
+    "osc",
+    "websocket",
+    "touch",
+    "multitouch"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "ws": "^8.14.2",
+    "osc-min": "^1.1.2"
+  }
+}
+
