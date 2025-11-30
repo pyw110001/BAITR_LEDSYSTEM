@@ -36,7 +36,7 @@ npm start
 
 3. **打开前端页面**
 
-在浏览器中打开 `index.html` 文件，或使用本地服务器：
+在浏览器中打开 `login.html` 文件（登录页面），或使用本地服务器：
 
 ```bash
 # 使用 Python
@@ -46,9 +46,18 @@ python -m http.server 3000
 npx http-server -p 3000
 ```
 
-然后在浏览器中访问 `http://localhost:3000`
+然后在浏览器中访问 `http://localhost:3000/login.html`
+
+**注意**: 登录页面输入任何字符（用户名或密码）都可以进入 TUIO 主界面。
 
 ## 使用方法
+
+### 0. 登录系统
+
+1. 打开 `login.html` 登录页面
+2. 在用户名或密码字段输入任意字符
+3. 点击"LOGIN"按钮或按回车键
+4. 系统会自动跳转到 TUIO 主界面
 
 ### 1. 连接服务器
 
@@ -132,7 +141,8 @@ UDP_PORT=3333
 ```
 .
 ├── server.js          # Node.js 后端服务器
-├── index.html         # 前端 HTML 页面
+├── login.html         # 登录页面
+├── index.html         # TUIO 主界面
 ├── app.js            # 前端 JavaScript 客户端
 ├── package.json       # 项目依赖配置
 └── README.md         # 项目文档

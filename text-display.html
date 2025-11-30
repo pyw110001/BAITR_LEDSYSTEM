@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LED 文字输出控制面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(to bottom right, #0a1628, #0d1d35, #0a1628);
+            color: white;
+            padding: 32px;
+            position: relative;
+            overflow-x: hidden;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 返回按钮 */
+        .back-button {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            background: rgba(15, 40, 71, 0.6);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #22d3ee;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        .back-button:hover {
+            background: rgba(15, 40, 71, 0.8);
+            border-color: rgba(6, 182, 212, 0.5);
+            transform: translateX(-4px);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.3);
+        }
+
+        .back-button svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* 头部 */
+        .header {
+            max-width: 1280px;
+            margin: 0 auto 32px;
+            text-align: center;
+        }
+
+        .header-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 8px;
+        }
+
+        .header-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(to bottom right, #22d3ee, #3b82f6);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.5);
+            font-size: 20px;
+        }
+
+        .header-title {
+            color: #22d3ee;
+            letter-spacing: 0.05em;
+            font-size: 1.75rem;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            color: rgba(6, 182, 212, 0.6);
+            font-size: 0.875rem;
+            letter-spacing: 0.1em;
+        }
+
+        /* 主内容 */
+        .main-content {
+            max-width: 1280px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        /* 左侧配置区域 */
+        .config-column {
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        /* 右侧预览区域 - 固定位置 */
+        .preview-column {
+            position: sticky;
+            top: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            max-height: calc(100vh - 48px);
+            overflow-y: auto;
+        }
+
+        .preview-column::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .preview-column::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+
+        .preview-column::-webkit-scrollbar-thumb {
+            background: rgba(6, 182, 212, 0.3);
+            border-radius: 3px;
+        }
+
+        .preview-column::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.5);
+        }
+
+        /* 卡片样式 */
+        .card {
+            background: linear-gradient(to bottom right, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.9));
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border-radius: 12px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            box-shadow: 0 8px 32px rgba(6, 182, 212, 0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: linear-gradient(to right, rgba(6, 182, 212, 0.1), rgba(59, 130, 246, 0.1));
+            border-bottom: 1px solid rgba(6, 182, 212, 0.2);
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22d3ee;
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+        }
+
+        .card-title {
+            color: #22d3ee;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .card-body {
+            padding: 24px;
+        }
+
+        /* 文字编辑器 */
+        .text-input-group {
+            margin-bottom: 24px;
+        }
+
+        .label {
+            display: block;
+            color: rgba(34, 211, 238, 0.8);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+        }
+
+        .textarea {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 14px;
+            min-height: 120px;
+            resize: none;
+            transition: all 0.3s ease;
+        }
+
+        .textarea:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+
+        .textarea::placeholder {
+            color: rgba(6, 182, 212, 0.5);
+        }
+
+        .char-count {
+            text-align: right;
+            color: rgba(6, 182, 212, 0.6);
+            font-size: 0.75rem;
+            margin-top: 4px;
+        }
+
+        .select-group {
+            margin-bottom: 24px;
+        }
+
+        .select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .select:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+
+        .slider-group {
+            margin-bottom: 24px;
+        }
+
+        .slider-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .slider-value {
+            color: #22d3ee;
+        }
+
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            background: #22d3ee;
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+        }
+
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            background: #22d3ee;
+            border-radius: 50%;
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 0 8px rgba(34, 211, 238, 0.5);
+        }
+
+        .slider-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: rgba(6, 182, 212, 0.6);
+            margin-top: 4px;
+        }
+
+        /* 颜色选择 */
+        .color-group {
+            margin-bottom: 24px;
+        }
+
+        .color-presets {
+            display: grid;
+            grid-template-columns: repeat(8, 1fr);
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .color-preset {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: 2px solid transparent;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .color-preset:hover {
+            transform: scale(1.1);
+        }
+
+        .color-preset.active {
+            border-color: #22d3ee;
+            box-shadow: 0 0 20px rgba(34, 211, 238, 0.6);
+            transform: scale(1.15);
+        }
+
+        .color-custom {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .color-picker {
+            width: 48px;
+            height: 40px;
+            border-radius: 8px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            cursor: pointer;
+            background: rgba(15, 23, 42, 0.5);
+        }
+
+        .color-input {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 10px 12px;
+            color: white;
+            font-size: 0.875rem;
+        }
+
+        .color-input:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+
+        /* 效果配置 */
+        .direction-buttons {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .direction-btn {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            padding: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            background: rgba(15, 23, 42, 0.5);
+            color: rgba(6, 182, 212, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .direction-btn:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+        }
+
+        .direction-btn.active {
+            background: rgba(6, 182, 212, 0.2);
+            border-color: #22d3ee;
+            color: #22d3ee;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+
+        .direction-btn svg {
+            width: 20px;
+            height: 20px;
+        }
+
+        .speed-group {
+            margin-bottom: 24px;
+        }
+
+        .speed-input-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .speed-input {
+            width: 96px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .speed-input:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+
+        .speed-slider {
+            flex: 1;
+        }
+
+        .speed-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+
+        .speed-range {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: rgba(6, 182, 212, 0.6);
+            margin-top: 4px;
+        }
+
+        .duration-group {
+            margin-bottom: 24px;
+        }
+
+        .duration-input-group {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .duration-input {
+            width: 96px;
+            background: rgba(15, 23, 42, 0.5);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 12px;
+            color: white;
+            text-align: center;
+        }
+
+        .duration-input:focus {
+            outline: none;
+            border-color: #22d3ee;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+        }
+
+        .duration-slider {
+            flex: 1;
+        }
+
+        /* LED 预览 */
+        .led-preview-container {
+            position: relative;
+            background: #000;
+            border-radius: 8px;
+            border: 2px solid rgba(55, 65, 81, 1);
+            overflow: hidden;
+            height: 200px;
+            box-shadow: inset 0 0 30px rgba(0, 217, 255, 0.1), 0 0 20px rgba(0, 217, 255, 0.2);
+        }
+
+        .led-grid {
+            position: absolute;
+            inset: 0;
+            opacity: 0.1;
+            background-image: 
+                radial-gradient(circle, currentColor 1px, transparent 1px),
+                radial-gradient(circle, currentColor 1px, transparent 1px);
+            background-size: 10px 10px;
+            background-position: 0 0, 5px 5px;
+        }
+
+        .led-text {
+            position: absolute;
+            white-space: nowrap;
+            top: 50%;
+            left: 0;
+            transform: translateY(-50%);
+            text-shadow: 
+                0 0 10px currentColor,
+                0 0 20px currentColor,
+                0 0 30px currentColor,
+                0 0 40px currentColor;
+        }
+
+        .preview-info {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        .info-item {
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            padding: 12px 16px;
+            border: 1px solid rgba(6, 182, 212, 0.2);
+        }
+
+        .info-label {
+            font-size: 0.75rem;
+            color: rgba(6, 182, 212, 0.6);
+            margin-bottom: 4px;
+        }
+
+        .info-value {
+            color: rgba(34, 211, 238, 1);
+        }
+
+        .info-color {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-color-box {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            box-shadow: 0 0 8px currentColor;
+        }
+
+        /* 发送按钮 */
+        .send-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(to right, #0891b2, #2563eb);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.6);
+            transform: translateY(-2px);
+        }
+
+        .send-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .send-button.sending {
+            background: linear-gradient(to right, #64748b, #475569);
+        }
+
+        .send-button.success {
+            background: linear-gradient(to right, #16a34a, #15803d);
+        }
+
+        .send-button.error {
+            background: linear-gradient(to right, #dc2626, #b91c1c);
+        }
+
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @media (max-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .preview-column {
+                position: relative;
+                top: 0;
+                max-height: none;
+            }
+
+            .back-button {
+                top: 16px;
+                left: 16px;
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 返回按钮 -->
+    <a href="navigation.html" class="back-button" id="backButton">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>返回导览</span>
+    </a>
+
+    <!-- 头部 -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-icon">💡</div>
+            <h1 class="header-title">LED SYSTEM</h1>
+        </div>
+        <p class="header-subtitle">文字输出控制面板 v1.0</p>
+    </div>
+
+    <!-- 主内容 -->
+    <div class="main-content">
+        <!-- 左侧：编辑器和配置 -->
+        <div class="config-column">
+            <!-- 文字编辑器 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-dot"></div>
+                    <h2 class="card-title">文字编辑</h2>
+                </div>
+                <div class="card-body">
+                    <div class="text-input-group">
+                        <label class="label">输入文字</label>
+                        <textarea 
+                            id="textInput" 
+                            class="textarea" 
+                            placeholder="请输入要显示的文字..."
+                            maxlength="200"
+                        >欢迎使用LED灯带控制系统</textarea>
+                        <div class="char-count"><span id="charCount">0</span> / 200</div>
+                    </div>
+
+                    <div class="select-group">
+                        <label class="label">字体选择</label>
+                        <select id="fontSelect" class="select">
+                            <option value="宋体">宋体 (SimSun)</option>
+                            <option value="楷体">楷体 (KaiTi)</option>
+                            <option value="黑体">黑体 (SimHei)</option>
+                            <option value="微软雅黑">微软雅黑 (Microsoft YaHei)</option>
+                        </select>
+                    </div>
+
+                    <div class="slider-group">
+                        <div class="slider-label">
+                            <label class="label">字号大小</label>
+                            <span class="slider-value">级别 <span id="fontSizeValue">3</span></span>
+                        </div>
+                        <input 
+                            type="range" 
+                            id="fontSizeSlider" 
+                            class="slider" 
+                            min="1" 
+                            max="5" 
+                            value="3"
+                        />
+                        <div class="slider-range">
+                            <span>最小</span>
+                            <span>最大</span>
+                        </div>
+                    </div>
+
+                    <div class="color-group">
+                        <label class="label">文字颜色</label>
+                        <div class="color-presets" id="colorPresets"></div>
+                        <div class="color-custom">
+                            <input type="color" id="colorPicker" class="color-picker" value="#00d9ff">
+                            <input type="text" id="colorInput" class="color-input" value="#00d9ff" placeholder="#00d9ff">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 效果配置 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-dot"></div>
+                    <h2 class="card-title">显示效果配置</h2>
+                </div>
+                <div class="card-body">
+                    <div>
+                        <label class="label" style="margin-bottom: 12px;">滚动方向</label>
+                        <div class="direction-buttons">
+                            <button class="direction-btn active" data-direction="left-to-right">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                </svg>
+                                <span>左 → 右</span>
+                            </button>
+                            <button class="direction-btn" data-direction="right-to-left">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+                                </svg>
+                                <span>右 → 左</span>
+                            </button>
+                            <button class="direction-btn" data-direction="top-to-bottom">
+                                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                </svg>
+                                <span>上 → 下</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="speed-group">
+                        <div class="speed-label">
+                            <label class="label">滚动速度</label>
+                            <span class="slider-value">级别 <span id="speedValue">2</span></span>
+                        </div>
+                        <div class="speed-input-group">
+                            <input type="number" id="speedInput" class="speed-input" min="1" max="5" value="2">
+                            <span style="color: rgba(34, 211, 238, 0.6);">级</span>
+                            <input type="range" id="speedSlider" class="speed-slider slider" min="1" max="5" value="2">
+                        </div>
+                        <div class="speed-range">
+                            <span>慢速 (1)</span>
+                            <span>快速 (5)</span>
+                        </div>
+                    </div>
+
+                    <div class="duration-group">
+                        <label class="label" style="margin-bottom: 12px;">停留时间</label>
+                        <div class="duration-input-group">
+                            <input type="number" id="durationInput" class="duration-input" min="0" max="10" value="3">
+                            <span style="color: rgba(34, 211, 238, 0.6);">秒</span>
+                            <input type="range" id="durationSlider" class="duration-slider slider" min="0" max="10" value="3">
+                        </div>
+                        <p style="font-size: 0.75rem; color: rgba(6, 182, 212, 0.6); margin-top: 8px;">
+                            文字完全显示后的停留时长 (0-10秒)
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 右侧：预览和发送 -->
+        <div class="preview-column">
+            <!-- LED 预览 -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-dot" style="animation: pulse 2s infinite;"></div>
+                    <h2 class="card-title">效果预览</h2>
+                </div>
+                <div class="card-body">
+                    <div class="led-preview-container" id="ledPreview">
+                        <div class="led-grid" id="ledGrid"></div>
+                        <div class="led-text" id="ledText">欢迎使用LED灯带控制系统</div>
+                    </div>
+                    <div class="preview-info">
+                        <div class="info-item">
+                            <div class="info-label">字体</div>
+                            <div class="info-value" id="previewFont">宋体</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">字号</div>
+                            <div class="info-value">级别 <span id="previewFontSize">3</span></div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">滚动速度</div>
+                            <div class="info-value" id="previewSpeed">中速</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">颜色</div>
+                            <div class="info-color">
+                                <div class="info-color-box" id="previewColorBox" style="background-color: #00d9ff;"></div>
+                                <span class="info-value" id="previewColor">#00d9ff</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 发送按钮 -->
+            <button class="send-button" id="sendButton">
+                <span>发送到LED灯带</span>
+            </button>
+        </div>
+    </div>
+
+    <script src="text-display.js"></script>
+</body>
+</html>
+

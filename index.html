@@ -13,11 +13,58 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #0a1628;
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+            opacity: 0;
+            animation: fadeIn 0.6s ease-in-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 装饰性圆形元素 */
+        body::before {
+            content: '';
+            position: fixed;
+            top: -200px;
+            right: -200px;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(0, 150, 255, 0.15) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        body::after {
+            content: '';
+            position: fixed;
+            bottom: -150px;
+            left: -150px;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 255, 255, 0.1) 0%, transparent 70%);
+            border-radius: 50%;
+            z-index: 0;
+            animation: float 15s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(30px, 30px) scale(1.1); }
         }
 
         .container {
@@ -27,19 +74,28 @@
             flex: 1;
             display: flex;
             flex-direction: column;
+            position: relative;
+            z-index: 1;
         }
 
+        /* 玻璃态效果头部 */
         header {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px;
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 24px 28px;
+            border-radius: 16px;
             margin-bottom: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
         }
 
         h1 {
-            color: #333;
-            margin-bottom: 10px;
+            color: #ffffff;
+            margin-bottom: 16px;
+            font-size: 1.75rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0, 150, 255, 0.3);
         }
 
         .status-bar {
@@ -52,75 +108,138 @@
         .status-item {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, rgba(0, 150, 255, 0.2) 0%, rgba(0, 255, 255, 0.2) 100%);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 255, 255, 0.3);
+        }
+
+        .status-item span {
+            color: #e0e0e0;
+            font-size: 0.875rem;
+        }
+
+        .status-item strong {
+            color: #00ffff;
+            font-weight: 600;
+            font-size: 0.875rem;
         }
 
         .status-indicator {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: #ccc;
+            background: #666;
             animation: pulse 2s infinite;
+            box-shadow: 0 0 8px currentColor;
         }
 
         .status-indicator.connected {
-            background: #4caf50;
+            background: #00ff88;
+            color: #00ff88;
         }
 
         .status-indicator.disconnected {
-            background: #f44336;
+            background: #ff4444;
+            color: #ff4444;
         }
 
         @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
+            0%, 100% { 
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% { 
+                opacity: 0.6;
+                transform: scale(1.2);
+            }
         }
 
         .main-content {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr;
             gap: 20px;
             flex: 1;
         }
 
+        @media (min-width: 1024px) {
+            .main-content {
+                grid-template-columns: 1fr 380px;
+            }
+        }
+
+        /* 玻璃态触摸区域 */
         .touch-area {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
             padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: hidden;
-            min-height: 500px;
+            min-height: 400px;
+            height: 100%;
             touch-action: none;
+        }
+
+        @media (min-width: 1024px) {
+            .touch-area {
+                min-height: 500px;
+            }
+        }
+
+        .touch-area::before {
+            content: '在此区域进行触摸/点击操作';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.8125rem;
+            z-index: 1;
         }
 
         .touch-point {
             position: absolute;
-            width: 40px;
-            height: 40px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
-            background: rgba(76, 175, 80, 0.6);
-            border: 3px solid #4caf50;
+            background: radial-gradient(circle, rgba(0, 255, 136, 0.4) 0%, rgba(0, 200, 255, 0.3) 100%);
+            border: 2px solid #00ff88;
             transform: translate(-50%, -50%);
             pointer-events: none;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
+            color: #ffffff;
             font-weight: bold;
-            font-size: 14px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            font-size: 0.875rem;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.6), 0 4px 12px rgba(0, 0, 0, 0.4);
             transition: all 0.1s ease;
+            z-index: 10;
         }
 
+        /* 玻璃态控制面板 */
         .control-panel {
-            background: rgba(255, 255, 255, 0.95);
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
             gap: 20px;
+            order: 2;
+        }
+
+        @media (min-width: 1024px) {
+            .control-panel {
+                order: 0;
+            }
         }
 
         .control-group {
@@ -130,102 +249,238 @@
         }
 
         .control-group label {
-            font-weight: 600;
-            color: #333;
+            font-weight: 500;
+            color: rgba(224, 224, 224, 0.9);
+            font-size: 0.875rem;
+            margin-bottom: 8px;
+            display: block;
         }
 
+        /* 深色输入框 */
         .control-group input,
         .control-group select {
-            padding: 10px;
-            border: 2px solid #ddd;
-            border-radius: 5px;
-            font-size: 14px;
+            padding: 12px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: #ffffff;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .control-group input::placeholder {
+            color: rgba(255, 255, 255, 0.4);
         }
 
         .control-group input:focus,
         .control-group select:focus {
             outline: none;
-            border-color: #667eea;
+            border-color: rgba(0, 255, 255, 0.5);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
         }
 
+        /* 渐变按钮 */
         button {
             padding: 12px 24px;
-            background: #667eea;
+            background: linear-gradient(135deg, #0096ff 0%, #00ffff 100%);
             color: white;
             border: none;
-            border-radius: 5px;
-            font-size: 16px;
+            border-radius: 8px;
+            font-size: 0.875rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4);
+            position: relative;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            transition: left 0.5s;
         }
 
         button:hover {
-            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0, 150, 255, 0.6);
+        }
+
+        button:hover::before {
+            left: 100%;
+        }
+
+        button:active {
+            transform: translateY(0);
         }
 
         button:disabled {
-            background: #ccc;
+            background: rgba(100, 100, 100, 0.3);
             cursor: not-allowed;
+            box-shadow: none;
+            transform: none;
         }
 
+        button:disabled::before {
+            display: none;
+        }
+
+        /* 优化的日志区域 */
         .log-area {
-            background: #1e1e1e;
-            color: #d4d4d4;
-            padding: 15px;
-            border-radius: 5px;
-            font-family: 'Courier New', monospace;
-            font-size: 12px;
+            background: #000000;
+            color: #00ff88;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-size: 0.75rem;
             max-height: 300px;
             overflow-y: auto;
             flex: 1;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+
+        .log-area::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-area::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .log-area::-webkit-scrollbar-thumb {
+            background: rgba(0, 255, 136, 0.3);
+            border-radius: 3px;
+        }
+
+        .log-area::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 255, 136, 0.5);
         }
 
         .log-entry {
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             padding: 2px 0;
+            line-height: 1.6;
         }
 
         .log-entry.info {
-            color: #4ec9b0;
+            color: #00ff88;
         }
 
         .log-entry.error {
-            color: #f48771;
+            color: #ff6b6b;
         }
 
         .log-entry.warn {
-            color: #dcdcaa;
+            color: #ffd93d;
         }
 
+        /* 改进的统计信息卡片 */
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 12px;
         }
 
         .stat-item {
-            background: #f5f5f5;
-            padding: 15px;
-            border-radius: 5px;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+
+        .stat-item:hover {
+            transform: translateY(-2px);
+            border-color: rgba(0, 255, 255, 0.3);
+            box-shadow: 0 6px 20px rgba(0, 150, 255, 0.2);
         }
 
         .stat-value {
-            font-size: 24px;
+            font-size: 2rem;
             font-weight: bold;
-            color: #667eea;
+            background: linear-gradient(135deg, #0096ff 0%, #00ffff 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 4px;
         }
 
         .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
+            font-size: 0.8125rem;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+        }
+
+        /* 返回按钮 */
+        .back-button {
+            position: fixed;
+            top: 24px;
+            left: 24px;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #00ffff;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .back-button:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(0, 255, 255, 0.3);
+            transform: translateX(-4px);
+            box-shadow: 0 6px 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .back-button svg {
+            width: 18px;
+            height: 18px;
         }
 
         @media (max-width: 768px) {
             .main-content {
                 grid-template-columns: 1fr;
+            }
+
+            body {
+                padding: 12px;
+            }
+
+            header {
+                padding: 18px;
+            }
+
+            .control-panel {
+                padding: 18px;
+            }
+
+            .back-button {
+                top: 16px;
+                left: 16px;
+                padding: 8px 12px;
+                font-size: 13px;
             }
         }
     </style>
@@ -268,8 +523,13 @@
                     <input type="number" id="udpPort" value="3333" placeholder="3333">
                 </div>
 
-                <button id="connectBtn">连接服务器</button>
-                <button id="resetBtn" disabled>重置</button>
+                <div class="control-group">
+                    <button id="connectBtn">连接服务器</button>
+                </div>
+
+                <div class="control-group">
+                    <button id="resetBtn" disabled>重置</button>
+                </div>
 
                 <div class="stats">
                     <div class="stat-item">
@@ -290,7 +550,32 @@
         </div>
     </div>
 
+    <!-- 返回按钮 -->
+    <a href="navigation.html" class="back-button" id="backButton">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        <span>返回导览</span>
+    </a>
+
     <script src="app.js"></script>
+    <script>
+        // 返回按钮过渡动画
+        document.getElementById('backButton').addEventListener('click', function(e) {
+            e.preventDefault();
+            const overlay = document.createElement('div');
+            overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a1628; z-index: 9999; opacity: 0; transition: opacity 0.4s ease;';
+            document.body.appendChild(overlay);
+            
+            setTimeout(() => {
+                overlay.style.opacity = '1';
+            }, 10);
+            
+            setTimeout(() => {
+                window.location.href = 'navigation.html';
+            }, 400);
+        });
+    </script>
 </body>
 </html>
 

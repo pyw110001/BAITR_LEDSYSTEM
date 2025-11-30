@@ -390,5 +390,10 @@ class TuioWebSocketClient {
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     new TuioWebSocketClient();
+    
+    // 页面加载动画
+    setTimeout(() => {
+        document.body.style.opacity = '1';
+    }, 100);
 });
 

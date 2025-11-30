@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>互动照明系统 - 功能导览</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            min-height: 100vh;
+            background: #0a1628;
+            color: white;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* 页面过渡动画 */
+        .page-transition {
+            animation: fadeIn 0.6s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 背景发光效果 */
+        .bg-glow-1 {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 800px;
+            height: 800px;
+            background: rgba(6, 182, 212, 0.2);
+            border-radius: 50%;
+            filter: blur(150px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .bg-glow-2 {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 600px;
+            height: 600px;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 50%;
+            filter: blur(120px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 主内容 */
+        .main-content {
+            position: relative;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 48px 24px;
+            z-index: 1;
+        }
+
+        /* 头部区域 */
+        .header-section {
+            text-align: center;
+            margin-bottom: 48px;
+        }
+
+        .header-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 16px;
+        }
+
+        .header-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22d3ee;
+            animation: pulse 2s infinite;
+        }
+
+        .header-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .header-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .header-title {
+            color: #22d3ee;
+            margin-bottom: 8px;
+            letter-spacing: 0.1em;
+            font-size: 2rem;
+            font-weight: 600;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: #9ca3af;
+            letter-spacing: 0.05em;
+        }
+
+        /* 状态栏 */
+        .status-bar {
+            max-width: 896px;
+            margin: 0 auto 32px;
+        }
+
+        .status-container {
+            background: rgba(15, 40, 71, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(6, 182, 212, 0.3);
+            border-radius: 8px;
+            padding: 16px;
+        }
+
+        .status-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #22d3ee;
+        }
+
+        .status-label {
+            font-size: 0.875rem;
+            color: #22d3ee;
+        }
+
+        .status-message {
+            background: rgba(26, 58, 92, 0.3);
+            border: 1px solid rgba(234, 179, 8, 0.5);
+            border-radius: 8px;
+            padding: 12px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .status-icon {
+            width: 20px;
+            height: 20px;
+            border: 2px solid #facc15;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .status-icon-text {
+            color: #facc15;
+            font-size: 0.75rem;
+        }
+
+        .status-text {
+            font-size: 0.875rem;
+            color: rgba(254, 240, 138, 0.9);
+        }
+
+        /* 功能卡片网格 */
+        .functions-section {
+            max-width: 1152px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            margin-bottom: 24px;
+            color: #d1d5db;
+            font-size: 1.25rem;
+            font-weight: 500;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 16px;
+        }
+
+        /* 功能卡片 */
+        .function-card {
+            background: rgba(15, 40, 71, 0.4);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            border: 1px solid rgba(6, 182, 212, 0.2);
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .function-card:hover {
+            border-color: rgba(6, 182, 212, 0.5);
+            box-shadow: 0 10px 25px rgba(6, 182, 212, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .function-card-content {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+        }
+
+        .function-icon-wrapper {
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            transition: transform 0.3s ease;
+        }
+
+        .function-card:hover .function-icon-wrapper {
+            transform: scale(1.1);
+        }
+
+        .icon-gradient-orange {
+            background: linear-gradient(to bottom right, #f97316, #ea580c);
+        }
+
+        .icon-gradient-cyan {
+            background: linear-gradient(to bottom right, #06b6d4, #3b82f6);
+        }
+
+        .icon-gradient-purple {
+            background: linear-gradient(to bottom right, #a855f7, #9333ea);
+        }
+
+        .icon-gradient-green {
+            background: linear-gradient(to bottom right, #22c55e, #16a34a);
+        }
+
+        .function-icon {
+            width: 24px;
+            height: 24px;
+            color: white;
+        }
+
+        .function-title {
+            margin-bottom: 8px;
+            color: #e5e7eb;
+            font-size: 1rem;
+            font-weight: 500;
+        }
+
+        .function-description {
+            font-size: 0.75rem;
+            color: #9ca3af;
+            margin-bottom: 24px;
+            line-height: 1.6;
+            min-height: 2.5rem;
+        }
+
+        .function-button {
+            width: 100%;
+            background: linear-gradient(to right, #0891b2, #2563eb);
+            color: white;
+            padding: 10px 16px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(6, 182, 212, 0.2);
+        }
+
+        .function-button:hover {
+            background: linear-gradient(to right, #06b6d4, #3b82f6);
+            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
+        }
+
+        .function-tag {
+            margin-top: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .tag-text {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        .tag-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22d3ee;
+        }
+
+        /* 页脚 */
+        .footer {
+            max-width: 1152px;
+            margin: 48px auto 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        /* 过渡遮罩 */
+        .transition-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #0a1628;
+            z-index: 9999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+        }
+
+        .transition-overlay.active {
+            opacity: 1;
+            pointer-events: all;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .main-content {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 过渡遮罩 -->
+    <div class="transition-overlay" id="transitionOverlay"></div>
+
+    <!-- 背景发光效果 -->
+    <div class="bg-glow-1"></div>
+    <div class="bg-glow-2"></div>
+
+    <!-- 主内容 -->
+    <div class="main-content page-transition">
+        <!-- 头部区域 -->
+        <div class="header-section">
+            <div class="header-dots">
+                <div class="header-dot"></div>
+                <div class="header-dot"></div>
+                <div class="header-dot"></div>
+            </div>
+            <h1 class="header-title">互动照明系统</h1>
+            <p class="header-subtitle">CONTROL PANEL v3.2.1</p>
+        </div>
+
+        <!-- 状态栏 -->
+        <div class="status-bar">
+            <div class="status-container">
+                <div class="status-header">
+                    <div class="status-dot"></div>
+                    <span class="status-label">System Status</span>
+                </div>
+                <div class="status-message">
+                    <div class="status-icon">
+                        <span class="status-icon-text">!</span>
+                    </div>
+                    <span class="status-text">所有系统正常运行，准备就绪</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能卡片网格 -->
+        <div class="functions-section">
+            <h2 class="section-title">系统功能模块</h2>
+            <div class="cards-grid">
+                <!-- 文字输出到灯带 -->
+                <div class="function-card" data-function="text">
+                    <div class="function-card-content">
+                        <div class="function-icon-wrapper icon-gradient-orange">
+                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </div>
+                        <h3 class="function-title">文字输出到灯带</h3>
+                        <p class="function-description">将文字内容转换为LED灯带显示效果</p>
+                        <button class="function-button">配置</button>
+                        <div class="function-tag">
+                            <span class="tag-text">LED</span>
+                            <div class="tag-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 网络设置 -->
+                <div class="function-card" data-function="network">
+                    <div class="function-card-content">
+                        <div class="function-icon-wrapper icon-gradient-cyan">
+                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                            </svg>
+                        </div>
+                        <h3 class="function-title">网络设置</h3>
+                        <p class="function-description">配置WiFi连接和网络协议</p>
+                        <button class="function-button">配置</button>
+                        <div class="function-tag">
+                            <span class="tag-text">Network</span>
+                            <div class="tag-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 多点触控交互 (TUIO) -->
+                <div class="function-card" data-function="tuio">
+                    <div class="function-card-content">
+                        <div class="function-icon-wrapper icon-gradient-purple">
+                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M18 11v-1a2 2 0 0 0-2-2h-1M4 13h8a2 2 0 0 1 2 2v1M10 10.5v.01M18 20c-1.925 0-3.85-.292-5.775-.875l-3.85-1.925a1 1 0 0 1-.575-.9v-1.9a1 1 0 0 1 .575-.9l3.85-1.925a18.84 18.84 0 0 1 5.775-.875 2 2 0 0 1 2 2v6a2 2 0 0 1-2 2Z"/>
+                                <path d="M4 13h8a2 2 0 0 1 2 2v1"/>
+                            </svg>
+                        </div>
+                        <h3 class="function-title">多点触控交互</h3>
+                        <p class="function-description">触摸屏多点触控控制</p>
+                        <button class="function-button">配置</button>
+                        <div class="function-tag">
+                            <span class="tag-text">Touch</span>
+                            <div class="tag-dot"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 系统设置 -->
+                <div class="function-card" data-function="system">
+                    <div class="function-card-content">
+                        <div class="function-icon-wrapper icon-gradient-green">
+                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="function-title">系统设置</h3>
+                        <p class="function-description">管理系统参数和设备配置</p>
+                        <button class="function-button">配置</button>
+                        <div class="function-tag">
+                            <span class="tag-text">System</span>
+                            <div class="tag-dot"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 页脚 -->
+        <div class="footer">
+            <span>© BAITR LED Systems Inc.</span>
+            <span>Build 20251130</span>
+        </div>
+    </div>
+
+    <script>
+        // 页面过渡动画函数
+        function transitionToPage(url) {
+            const overlay = document.getElementById('transitionOverlay');
+            overlay.classList.add('active');
+            
+            setTimeout(() => {
+                window.location.href = url;
+            }, 400);
+        }
+
+        // 功能卡片点击事件
+        document.querySelectorAll('.function-card').forEach(card => {
+            const functionType = card.getAttribute('data-function');
+            const button = card.querySelector('.function-button');
+            
+            // 卡片点击
+            card.addEventListener('click', (e) => {
+                if (e.target !== button) {
+                    handleFunctionClick(functionType);
+                }
+            });
+            
+            // 按钮点击
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                handleFunctionClick(functionType);
+            });
+        });
+
+        function handleFunctionClick(functionType) {
+            switch(functionType) {
+                case 'tuio':
+                    // 跳转到 TUIO 配置页面
+                    transitionToPage('index.html');
+                    break;
+                case 'text':
+                    // 跳转到文字显示页面
+                    transitionToPage('text-display.html');
+                    break;
+                case 'network':
+                    alert('网络设置功能开发中...');
+                    break;
+                case 'system':
+                    alert('系统设置功能开发中...');
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        // 页面加载动画
+        window.addEventListener('load', () => {
+            document.body.style.opacity = '0';
+            setTimeout(() => {
+                document.body.style.transition = 'opacity 0.5s ease-in';
+                document.body.style.opacity = '1';
+            }, 100);
+        });
+    </script>
+</body>
+</html>
+
