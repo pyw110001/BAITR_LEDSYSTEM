@@ -1,0 +1,5 @@
+{
+  "name": "LED Animation Studio",
+  "description": "Professional LED strip animation management system with real-time preview, parsing, and hardware application capabilities.",
+  "requestFramePermissions": []
+}

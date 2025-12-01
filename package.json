@@ -3,9 +3,13 @@
   "version": "1.0.0",
   "description": "WebSocket to TUIO/OSC bridge for web-based touch applications",
   "main": "server.js",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "animation:dev": "cd animation-studio && vite",
+    "animation:build": "cd animation-studio && vite build",
+    "animation:preview": "cd animation-studio && vite preview"
   },
   "keywords": [
     "tuio",
@@ -18,7 +22,16 @@
   "license": "MIT",
   "dependencies": {
     "ws": "^8.14.2",
-    "osc-min": "^1.1.2"
+    "osc-min": "^1.1.2",
+    "react": "^19.2.0",
+    "react-dom": "^19.2.0",
+    "lucide-react": "^0.555.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@vitejs/plugin-react": "^5.0.0",
+    "typescript": "~5.8.2",
+    "vite": "^6.2.0"
   }
 }
 
