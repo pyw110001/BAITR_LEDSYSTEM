@@ -1,6 +1,6 @@
-import { WebSocketServer } from 'ws';
-import dgram from 'dgram';
-import osc from 'osc-min';
+const WebSocket = require('ws');
+const dgram = require('dgram');
+const osc = require('osc-min');
 
 /**
  * TUIO WebSocket to OSC/UDP Bridge Server
