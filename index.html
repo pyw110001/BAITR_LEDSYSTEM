@@ -14,12 +14,12 @@
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: #0a1628;
-            min-height: 100vh;
+            height: 100vh;
             display: flex;
             flex-direction: column;
             padding: 20px;
             position: relative;
-            overflow-x: hidden;
+            overflow: hidden;
             opacity: 0;
             animation: fadeIn 0.6s ease-in-out forwards;
         }
@@ -71,11 +71,12 @@
             max-width: 1400px;
             margin: 0 auto;
             width: 100%;
-            flex: 1;
+            height: 100%;
             display: flex;
             flex-direction: column;
             position: relative;
             z-index: 1;
+            overflow: hidden;
         }
 
         /* 玻璃态效果头部 */
@@ -84,16 +85,17 @@
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 24px 28px;
+            padding: 16px 20px;
             border-radius: 16px;
-            margin-bottom: 20px;
+            margin-bottom: 16px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            flex-shrink: 0;
         }
 
         h1 {
             color: #ffffff;
-            margin-bottom: 16px;
-            font-size: 1.75rem;
+            margin-bottom: 12px;
+            font-size: 1.5rem;
             font-weight: 700;
             text-shadow: 0 2px 10px rgba(0, 150, 255, 0.3);
         }
@@ -159,8 +161,10 @@
         .main-content {
             display: grid;
             grid-template-columns: 1fr;
-            gap: 20px;
+            gap: 16px;
             flex: 1;
+            min-height: 0;
+            overflow: hidden;
         }
 
         @media (min-width: 1024px) {
@@ -180,15 +184,9 @@
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             position: relative;
             overflow: hidden;
-            min-height: 400px;
+            min-height: 0;
             height: 100%;
             touch-action: none;
-        }
-
-        @media (min-width: 1024px) {
-            .touch-area {
-                min-height: 500px;
-            }
         }
 
         .touch-area::before {
@@ -228,12 +226,15 @@
             -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.1);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 16px;
             order: 2;
+            min-height: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         @media (min-width: 1024px) {
@@ -241,11 +242,31 @@
                 order: 0;
             }
         }
+        
+        /* 自定义滚动条样式 */
+        .control-panel::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .control-panel::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+        }
+        
+        .control-panel::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+        
+        .control-panel::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
 
         .control-group {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
+            flex-shrink: 0;
         }
 
         .control-group label {
@@ -281,8 +302,29 @@
             box-shadow: 0 0 12px rgba(0, 255, 255, 0.2);
         }
 
+        /* 模式切换按钮 */
+        .mode-btn {
+            flex: 1;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.3);
+            color: rgba(255, 255, 255, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .mode-btn.active {
+            background: linear-gradient(135deg, #0096ff 0%, #00ffff 100%);
+            color: white;
+            border-color: transparent;
+            box-shadow: 0 4px 15px rgba(0, 150, 255, 0.4);
+        }
+
         /* 渐变按钮 */
-        button {
+        button:not(.mode-btn) {
             padding: 12px 24px;
             background: linear-gradient(135deg, #0096ff 0%, #00ffff 100%);
             color: white;
@@ -298,7 +340,7 @@
             width: 100%;
         }
 
-        button::before {
+        button:not(.mode-btn)::before {
             content: '';
             position: absolute;
             top: 0;
@@ -309,17 +351,22 @@
             transition: left 0.5s;
         }
 
-        button:hover {
+        button:not(.mode-btn):hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(0, 150, 255, 0.6);
         }
 
-        button:hover::before {
+        button:not(.mode-btn):hover::before {
             left: 100%;
         }
 
-        button:active {
+        button:not(.mode-btn):active {
             transform: translateY(0);
+        }
+
+        .mode-btn:hover:not(.active) {
+            background: rgba(0, 0, 0, 0.5);
+            border-color: rgba(255, 255, 255, 0.2);
         }
 
         button:disabled {
@@ -337,12 +384,13 @@
         .log-area {
             background: #000000;
             color: #00ff88;
-            padding: 16px;
+            padding: 12px;
             border-radius: 8px;
             font-family: 'Courier New', 'Consolas', monospace;
             font-size: 0.75rem;
-            max-height: 300px;
+            max-height: 180px;
             overflow-y: auto;
+            flex-shrink: 0;
             flex: 1;
             border: 1px solid rgba(0, 255, 136, 0.2);
             box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.1);
@@ -387,14 +435,15 @@
         .stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 12px;
+            gap: 10px;
+            flex-shrink: 0;
         }
 
         .stat-item {
             background: rgba(0, 0, 0, 0.3);
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            padding: 20px;
+            padding: 12px;
             border-radius: 12px;
             text-align: center;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -509,18 +558,45 @@
 
             <div class="control-panel">
                 <div class="control-group">
+                    <label>工作模式</label>
+                    <div style="display: flex; gap: 10px;">
+                        <button id="modeSend" class="mode-btn active">发送模式</button>
+                        <button id="modeReceive" class="mode-btn">接收模式</button>
+                    </div>
+                    <div style="margin-top: 8px; font-size: 12px; color: #888;">
+                        <span id="modeDescription">发送模式：前端触摸 → WebSocket → UDP/OSC</span>
+                    </div>
+                </div>
+
+                <div class="control-group" id="wsUrlGroup">
                     <label>WebSocket 服务器</label>
                     <input type="text" id="wsUrl" value="ws://localhost:8080" placeholder="ws://localhost:8080">
                 </div>
 
-                <div class="control-group">
+                <div class="control-group" id="udpTargetGroup">
                     <label>UDP 主机</label>
                     <input type="text" id="udpHost" value="127.0.0.1" placeholder="127.0.0.1">
                 </div>
 
-                <div class="control-group">
+                <div class="control-group" id="udpPortGroup">
                     <label>UDP 端口</label>
                     <input type="number" id="udpPort" value="3333" placeholder="3333">
+                </div>
+
+                <div class="control-group" id="tuioHostGroup" style="display: none;">
+                    <label>TUIO 服务器 IP</label>
+                    <input type="text" id="tuioHost" value="192.168.3.41" placeholder="192.168.3.41">
+                    <div style="margin-top: 4px; font-size: 11px; color: #888;">
+                        手机TUIOpad应连接到此IP地址（可手动修改）
+                    </div>
+                </div>
+
+                <div class="control-group" id="tuioPortGroup" style="display: none;">
+                    <label>TUIO 服务器端口</label>
+                    <input type="number" id="tuioPort" value="3333" placeholder="3333">
+                    <div style="margin-top: 4px; font-size: 11px; color: #888;">
+                        支持UDP和TCP协议（可手动修改）
+                    </div>
                 </div>
 
                 <div class="control-group">
