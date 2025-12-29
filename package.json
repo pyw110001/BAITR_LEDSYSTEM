@@ -5,11 +5,13 @@
   "main": "server.js",
   "type": "module",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "animation:dev": "cd animation-studio && vite",
-    "animation:build": "cd animation-studio && vite build",
-    "animation:preview": "cd animation-studio && vite preview"
+    "start": "node start.js",
+    "dev": "node start.js",
+    "server:bridge": "node server.js",
+    "server:static": "node static-server.js",
+    "animation:dev": "pnpm --filter led-animation-studio dev",
+    "animation:build": "pnpm --filter led-animation-studio build",
+    "animation:preview": "pnpm --filter led-animation-studio preview"
   },
   "keywords": [
     "tuio",

@@ -1,6 +1,25 @@
-# TUIO WebSocket Bridge
+# TUIO WebSocket Bridge - 集成项目
 
 基于 Web 的 TUIO 通信应用，将前端 WebSocket 数据实时转换为 OSC 消息，通过 UDP 协议传递给支持 TUIO 协议的目标软件。
+
+## 项目结构
+
+本项目采用 **pnpm workspace** Monorepo 架构，包含以下模块：
+
+```
+.
+├── server.js              # WebSocket 到 TUIO/OSC 桥接服务器 (端口 8080)
+├── static-server.js       # 静态文件服务器 (端口 8081，默认打开 login.html)
+├── start.js               # 统一启动脚本
+├── login.html             # 登录页面（默认入口）
+├── navigation.html        # 导航页面
+├── animation-studio/      # Animation Studio 子项目 (端口 3000)
+│   ├── App.tsx
+│   ├── vite.config.ts
+│   └── package.json
+├── pnpm-workspace.yaml    # pnpm workspace 配置
+└── package.json           # 根项目配置
+```
 
 ## 功能特性
 
@@ -10,83 +29,92 @@
 - ✅ **多点触控支持**: 支持同时处理多个触摸点（光标）
 - ✅ **实时可视化**: 前端界面实时显示触摸点位置
 - ✅ **TUIO 2D 协议**: 完整支持 TUIO 2D 协议（光标、对象、Blob）
+- ✅ **Monorepo 架构**: 使用 pnpm workspace 管理多项目
+- ✅ **统一启动**: 一个命令启动所有服务
 
 ## 系统要求
 
-- Node.js 14.0 或更高版本
+- Node.js 18.0 或更高版本
+- pnpm 8.0 或更高版本
 - 现代浏览器（支持 WebSocket 和触摸事件）
 
-## 安装步骤
+## 快速开始
 
-1. **安装依赖**
-
-```bash
-npm install
-```
-
-2. **启动服务器**
+### 1. 安装依赖
 
 ```bash
-npm start
+# 安装 pnpm（如果还没有安装）
+npm install -g pnpm
+
+# 安装所有依赖（包括子项目）
+pnpm install
 ```
 
-服务器将在以下端口启动：
-- WebSocket 服务器: `http://localhost:8080`
-- UDP 目标: `127.0.0.1:3333` (默认)
-
-3. **打开前端页面**
-
-在浏览器中打开 `login.html` 文件（登录页面），或使用本地服务器：
+### 2. 启动所有服务
 
 ```bash
-# 使用 Python
-python -m http.server 3000
-
-# 或使用 Node.js http-server
-npx http-server -p 3000
+# 使用统一启动命令
+pnpm start
+# 或
+npm run start
 ```
 
-然后在浏览器中访问 `http://localhost:3000/login.html`
+启动后，所有服务将同时运行：
 
-**注意**: 登录页面输入任何字符（用户名或密码）都可以进入 TUIO 主界面。
+- **静态文件服务器**: http://localhost:8081 (默认打开 login.html)
+- **WebSocket 服务器**: ws://localhost:8080
+- **Animation Studio**: http://localhost:3000
+
+### 3. 单独启动服务
+
+如果需要单独启动某个服务：
+
+```bash
+# 只启动 WebSocket 桥接服务器
+pnpm run server:bridge
+
+# 只启动静态文件服务器
+pnpm run server:static
+
+# 只启动 Animation Studio
+pnpm run animation:dev
+```
 
 ## 使用方法
 
-### 0. 登录系统
+### 登录系统
 
-1. 打开 `login.html` 登录页面
+1. 启动服务后，浏览器会自动打开或访问 http://localhost:8081（默认打开 login.html）
 2. 在用户名或密码字段输入任意字符
 3. 点击"LOGIN"按钮或按回车键
-4. 系统会自动跳转到 TUIO 主界面
+4. 系统会自动跳转到导航界面
 
-### 1. 连接服务器
+### 访问不同功能
 
-1. 在控制面板中输入 WebSocket 服务器地址（默认: `ws://localhost:8080`）
-2. 配置 UDP 目标地址和端口（默认: `127.0.0.1:3333`）
-3. 点击"连接服务器"按钮
+- **登录页面**: http://localhost:8081/login.html
+- **导航页面**: http://localhost:8081/navigation.html
+- **Animation Studio**: http://localhost:3000
 
-### 2. 发送触摸数据
+### TUIO 功能使用
 
-- **鼠标操作**: 在触摸区域点击并拖动
-- **触摸操作**: 在触摸屏设备上使用多点触控
-- 触摸点会实时显示在界面上，并自动转换为 TUIO 消息发送
-
-### 3. 监控状态
-
-- **连接状态**: 顶部状态栏显示 WebSocket 连接状态
-- **活动光标**: 显示当前活动的触摸点数量
-- **总帧数**: 显示已发送的帧数
-- **日志**: 实时显示操作日志
+1. 在导航页面中，点击进入 TUIO 主界面
+2. 在控制面板中输入 WebSocket 服务器地址（默认: `ws://localhost:8080`）
+3. 配置 UDP 目标地址和端口（默认: `127.0.0.1:3333`）
+4. 点击"连接服务器"按钮
+5. 在触摸区域进行交互，触摸点会实时显示并转换为 TUIO 消息发送
 
 ## 配置选项
 
 ### 环境变量
 
-可以通过环境变量配置服务器：
+可以通过环境变量配置服务器端口：
 
 ```bash
 # WebSocket 端口
 WS_PORT=8080
+
+# 静态文件服务器端口
+STATIC_PORT=8081
 
 # UDP 目标主机
 UDP_HOST=127.0.0.1
@@ -95,92 +123,55 @@ UDP_HOST=127.0.0.1
 UDP_PORT=3333
 ```
 
-### 消息格式
+### Animation Studio 配置
 
-前端发送的 WebSocket 消息格式：
-
-```json
-{
-  "type": "cursor",
-  "action": "add|update|remove",
-  "sessionId": 123,
-  "x": 0.5,
-  "y": 0.5,
-  "xSpeed": 0.0,
-  "ySpeed": 0.0,
-  "motionAccel": 0.0
-}
-```
-
-### TUIO 协议支持
-
-本应用支持以下 TUIO 消息类型：
-
-- **2Dcur** (光标): `/tuio/2Dcur`
-- **2Dobj** (对象): `/tuio/2Dobj`
-- **2Dblb** (Blob): `/tuio/2Dblb`
-
-## 与 TUIO 应用集成
-
-### 接收端配置
-
-确保你的 TUIO 应用监听以下端口：
-- **UDP 端口**: 3333 (默认)
-- **协议**: OSC over UDP
-
-### 测试工具
-
-可以使用以下工具测试 TUIO 消息接收：
-
-1. **TUIO Simulator**: 用于模拟 TUIO 输入
-2. **OSC Monitor**: 用于监控 OSC 消息
-3. **Processing/OpenFrameworks**: 支持 TUIO 的创意编程框架
-
-## 项目结构
-
-```
-.
-├── server.js          # Node.js 后端服务器
-├── login.html         # 登录页面
-├── index.html         # TUIO 主界面
-├── app.js            # 前端 JavaScript 客户端
-├── package.json       # 项目依赖配置
-└── README.md         # 项目文档
-```
-
-## 技术栈
-
-- **后端**: Node.js, WebSocket (ws), OSC (osc), UDP (dgram)
-- **前端**: HTML5, CSS3, JavaScript (ES6+)
-- **协议**: TUIO 1.1, OSC 1.0, UDP
+Animation Studio 的配置位于 `animation-studio/vite.config.ts`，默认端口为 3000。
 
 ## 开发说明
+
+### 项目架构
+
+- **Monorepo**: 使用 pnpm workspace 管理多个子项目
+- **独立运行**: 每个子项目可以独立运行，互不干扰
+- **统一管理**: 通过根目录的 `start.js` 统一启动所有服务
 
 ### 添加新功能
 
 1. **添加新的 TUIO 类型**: 在 `server.js` 中添加对应的处理方法
-2. **扩展前端界面**: 修改 `index.html` 和 `app.js`
+2. **扩展前端界面**: 修改 HTML 文件和 JavaScript 代码
 3. **自定义消息格式**: 修改 WebSocket 消息处理逻辑
 
 ### 调试
 
-- 查看服务器控制台输出
+- 查看服务器控制台输出（每个服务都有独立的日志标识）
 - 查看浏览器控制台日志
 - 使用 OSC 监控工具检查 UDP 消息
 
 ## 常见问题
 
-### Q: WebSocket 连接失败？
+### Q: pnpm 命令未找到？
 
-A: 检查服务器是否已启动，端口是否被占用，防火墙设置是否正确。
+A: 需要先安装 pnpm: `npm install -g pnpm`
 
-### Q: UDP 消息未收到？
+### Q: 端口被占用？
 
-A: 检查目标应用的 UDP 端口配置，确保防火墙允许 UDP 通信。
+A: 修改环境变量或配置文件中的端口号，确保端口未被其他程序占用。
 
-### Q: 触摸点不显示？
+### Q: Animation Studio 无法启动？
 
-A: 确保浏览器支持触摸事件，检查 JavaScript 控制台是否有错误。
+A: 确保已安装所有依赖：`pnpm install`，然后可以单独测试：`pnpm run animation:dev`
+
+### Q: 如何只运行某个服务？
+
+A: 使用对应的单独启动命令，如 `pnpm run server:bridge` 或 `pnpm run animation:dev`
+
+## 技术栈
+
+- **后端**: Node.js, WebSocket (ws), OSC (osc-min), UDP (dgram)
+- **前端**: HTML5, CSS3, JavaScript (ES6+)
+- **Animation Studio**: React, TypeScript, Vite
+- **协议**: TUIO 1.1, OSC 1.0, UDP
+- **包管理**: pnpm workspace
 
 ## 许可证
 
@@ -190,9 +181,4 @@ MIT License
 
 - [TUIO 协议规范](http://www.tuio.org/)
 - [OSC 协议](https://opensoundcontrol.org/)
-- [TUIO11_NET 项目](https://github.com/mkalten/TUIO11_NET)
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
-
+- [pnpm workspace 文档](https://pnpm.io/workspaces)
