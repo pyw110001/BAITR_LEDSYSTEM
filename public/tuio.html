@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -29,6 +30,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -63,8 +65,15 @@
         }
 
         @keyframes float {
-            0%, 100% { transform: translate(0, 0) scale(1); }
-            50% { transform: translate(30px, 30px) scale(1.1); }
+
+            0%,
+            100% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            50% {
+                transform: translate(30px, 30px) scale(1.1);
+            }
         }
 
         .container {
@@ -148,11 +157,14 @@
         }
 
         @keyframes pulse {
-            0%, 100% { 
+
+            0%,
+            100% {
                 opacity: 1;
                 transform: scale(1);
             }
-            50% { 
+
+            50% {
                 opacity: 0.6;
                 transform: scale(1.2);
             }
@@ -242,22 +254,22 @@
                 order: 0;
             }
         }
-        
+
         /* 自定义滚动条样式 */
         .control-panel::-webkit-scrollbar {
             width: 6px;
         }
-        
+
         .control-panel::-webkit-scrollbar-track {
             background: rgba(0, 0, 0, 0.2);
             border-radius: 3px;
         }
-        
+
         .control-panel::-webkit-scrollbar-thumb {
             background: rgba(255, 255, 255, 0.2);
             border-radius: 3px;
         }
-        
+
         .control-panel::-webkit-scrollbar-thumb:hover {
             background: rgba(255, 255, 255, 0.3);
         }
@@ -534,6 +546,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <header>
@@ -628,8 +641,9 @@
 
     <!-- 返回按钮 -->
     <a href="navigation.html" class="back-button" id="backButton">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         <span>返回导览</span>
     </a>
@@ -637,21 +651,21 @@
     <script src="app.js"></script>
     <script>
         // 返回按钮过渡动画
-        document.getElementById('backButton').addEventListener('click', function(e) {
+        document.getElementById('backButton').addEventListener('click', function (e) {
             e.preventDefault();
             const overlay = document.createElement('div');
             overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a1628; z-index: 9999; opacity: 0; transition: opacity 0.4s ease;';
             document.body.appendChild(overlay);
-            
+
             setTimeout(() => {
                 overlay.style.opacity = '1';
             }, 10);
-            
+
             setTimeout(() => {
                 window.location.href = 'navigation.html';
             }, 400);
         });
     </script>
 </body>
-</html>
 
+</html>

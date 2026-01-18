@@ -4,6 +4,18 @@ import dgram from 'dgram';
 import net from 'net';
 import osc from 'osc-min';
 import os from 'os';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+// 兼容 ESM 和 CJS (用于 pkg 打包)
+let _rootValue;
+try {
+  _rootValue = __dirname;
+} catch (e) {
+  _rootValue = (import.meta && import.meta.url) ? path.dirname(fileURLToPath(import.meta.url)) : process.cwd();
+}
+const PROJECT_ROOT = _rootValue;
+const __dirname_fix = PROJECT_ROOT;
 
 /**
  * TUIO Bridge Server
@@ -11,7 +23,7 @@ import os from 'os';
  * 1. 前端 WebSocket -> OSC/UDP (原有功能)
  * 2. 手机 TUIOpad (TCP/UDP) -> OSC -> WebSocket -> 前端 (新增功能)
  */
-class TuioBridgeServer {
+export class TuioBridgeServer {
   constructor(options = {}) {
     this.wsPort = options.wsPort || 8080;
     this.udpHost = options.udpHost || '127.0.0.1';
@@ -38,7 +50,7 @@ class TuioBridgeServer {
 
     // 创建 UDP 服务器（用于接收来自手机的UDP OSC消息）
     this.udpServer = dgram.createSocket('udp4');
-    
+
     this.udpServer.on('message', (msg, rinfo) => {
       console.log(`\n[UDP Server] ===== 收到UDP消息 =====`);
       console.log(`[UDP Server] 来源: ${rinfo.address}:${rinfo.port}`);
@@ -47,12 +59,12 @@ class TuioBridgeServer {
       this.handleOSCMessage(msg, `UDP:${rinfo.address}:${rinfo.port}`);
       console.log(`[UDP Server] ========================\n`);
     });
-    
+
     this.udpServer.on('error', (err) => {
       console.error('[UDP Server] 错误:', err);
       console.error('[UDP Server] 错误详情:', err.message, err.code);
     });
-    
+
     this.udpServer.on('listening', () => {
       const address = this.udpServer.address();
       console.log(`\n[TUIO Bridge] ==========================================`);
@@ -61,7 +73,7 @@ class TuioBridgeServer {
       console.log(`[TUIO Bridge]   监听端口: ${address.port}`);
       console.log(`[TUIO Bridge]   协议: UDP/IPv4`);
       console.log(`[TUIO Bridge]   准备接收来自手机的TUIO消息...`);
-      
+
       // 获取本机IP地址用于提示
       const interfaces = os.networkInterfaces();
       const ips = [];
@@ -78,7 +90,7 @@ class TuioBridgeServer {
       }
       console.log(`[TUIO Bridge] ==========================================\n`);
     });
-    
+
     // 绑定到0.0.0.0以接收来自所有网络接口的消息
     this.udpServer.bind(this.udpListenPort, '0.0.0.0', (err) => {
       if (err) {
@@ -96,9 +108,9 @@ class TuioBridgeServer {
     this.tcpServer = net.createServer((socket) => {
       const clientInfo = `${socket.remoteAddress}:${socket.remotePort}`;
       console.log(`[TCP Server] 新客户端连接: ${clientInfo}`);
-      
+
       let buffer = Buffer.alloc(0);
-      
+
       socket.on('data', (data) => {
         console.log(`[TCP Server] 收到数据来自 ${clientInfo}, 长度: ${data.length} 字节`);
         buffer = Buffer.concat([buffer, data]);
@@ -132,7 +144,7 @@ class TuioBridgeServer {
       this.wss.on('connection', (ws) => {
         console.log(`[WebSocket] 新客户端连接: ${ws._socket.remoteAddress}`);
         this.wsClients.add(ws);
-        
+
         ws.on('message', (data) => {
           try {
             const message = JSON.parse(data.toString());
@@ -191,10 +203,10 @@ class TuioBridgeServer {
     try {
       console.log(`[OSC] 收到消息 (${source}), 缓冲区长度: ${buffer.length} 字节`);
       console.log(`[OSC] 缓冲区前32字节 (hex):`, buffer.slice(0, Math.min(32, buffer.length)).toString('hex'));
-      
+
       // 检查是否是OSC bundle格式（以 "#bundle" 开头）
       const isBundle = buffer.length >= 8 && buffer.slice(0, 8).toString('ascii').startsWith('#bundle');
-      
+
       if (isBundle) {
         console.log(`[OSC] 检测到OSC Bundle格式`);
         this.handleOSCBundle(buffer, source);
@@ -202,11 +214,11 @@ class TuioBridgeServer {
         // 单个OSC消息
         const oscMessage = osc.fromBuffer(buffer);
         console.log(`[OSC] ✓ 解析成功: 地址=${oscMessage.address}, 参数数量=${oscMessage.args?.length || 0}`);
-        
+
         if (oscMessage.args && oscMessage.args.length > 0) {
           console.log(`[OSC] 第一个参数类型: ${oscMessage.args[0].type}, 值: ${oscMessage.args[0].value}`);
         }
-        
+
         this.processOSCMessage(oscMessage, source);
       }
     } catch (error) {
@@ -224,34 +236,34 @@ class TuioBridgeServer {
   handleOSCBundle(buffer, source) {
     try {
       let offset = 8; // 跳过 "#bundle" (8字节)
-      
+
       // 读取时间戳（8字节，OSC时间戳格式）
       const timeTag = buffer.slice(offset, offset + 8);
       offset += 8;
-      
+
       console.log(`[OSC Bundle] 时间戳:`, timeTag.toString('hex'));
-      
+
       // 解析bundle中的所有消息
       while (offset < buffer.length) {
         if (offset + 4 > buffer.length) {
           break; // 没有足够的数据读取长度
         }
-        
+
         // 读取消息长度（4字节，大端序）
         const messageLength = buffer.readUInt32BE(offset);
         offset += 4;
-        
+
         if (messageLength === 0 || offset + messageLength > buffer.length) {
           break; // 无效长度或数据不完整
         }
-        
+
         // 提取OSC消息
         const messageBuffer = buffer.slice(offset, offset + messageLength);
         offset += messageLength;
-        
+
         // 对齐到4字节边界
         offset = Math.ceil(offset / 4) * 4;
-        
+
         try {
           // 解析单个OSC消息
           const oscMessage = osc.fromBuffer(messageBuffer);
@@ -261,7 +273,7 @@ class TuioBridgeServer {
           console.error(`[OSC Bundle] ✗ 解析bundle中的消息失败:`, error.message);
         }
       }
-      
+
       const messageCount = Math.floor((offset - 16) / 4);
       console.log(`[OSC Bundle] ✓ Bundle处理完成`);
     } catch (error) {
@@ -276,25 +288,25 @@ class TuioBridgeServer {
    */
   processTCPBuffer(buffer, callback, source) {
     let offset = 0;
-    
+
     while (offset + 4 <= buffer.length) {
       try {
         // 读取消息长度（4字节，大端序）
         const messageLength = buffer.readUInt32BE(offset);
-        
+
         // 检查是否有足够的数据
         if (offset + 4 + messageLength > buffer.length) {
           // 消息不完整，等待更多数据
           break;
         }
-        
+
         // 提取OSC消息内容
         const oscBuffer = buffer.slice(offset + 4, offset + 4 + messageLength);
-        
+
         // 解析OSC消息
         const oscMessage = osc.fromBuffer(oscBuffer);
         this.processOSCMessage(oscMessage, source);
-        
+
         // 移动到下一个消息
         offset += 4 + messageLength;
       } catch (error) {
@@ -303,7 +315,7 @@ class TuioBridgeServer {
           const oscMessage = osc.fromBuffer(buffer.slice(offset));
           const messageLength = osc.toBuffer(oscMessage).length;
           this.processOSCMessage(oscMessage, source);
-          
+
           // OSC消息长度必须是4的倍数，对齐到4字节边界
           offset += Math.ceil(messageLength / 4) * 4;
         } catch (error2) {
@@ -312,7 +324,7 @@ class TuioBridgeServer {
         }
       }
     }
-    
+
     callback(buffer.slice(offset));
   }
 
@@ -322,7 +334,7 @@ class TuioBridgeServer {
   processOSCMessage(oscMessage, source) {
     const address = oscMessage.address;
     console.log(`[TUIO] 处理消息: ${address} (来源: ${source})`);
-    
+
     // 只处理TUIO协议的消息
     if (!address.startsWith('/tuio/')) {
       console.log(`[TUIO] 跳过非TUIO消息: ${address}`);
@@ -339,7 +351,7 @@ class TuioBridgeServer {
     // 处理光标消息
     if (address === '/tuio/2Dcur') {
       console.log(`[TUIO] 处理2Dcur消息, 命令: ${command}, 参数数量: ${args.length}`);
-      
+
       if (command === 'set' && args.length >= 6) {
         const sessionId = args[1].value;
         const x = args[2].value;
@@ -352,7 +364,7 @@ class TuioBridgeServer {
 
         // 判断是新增还是更新
         const isNew = !this.activeCursors.has(sessionId);
-        
+
         // 更新本地状态
         this.activeCursors.set(sessionId, { x, y, xSpeed, ySpeed, motionAccel });
 
@@ -373,7 +385,7 @@ class TuioBridgeServer {
         // alive消息包含所有活动的sessionId列表
         const aliveIds = args.slice(1).map(arg => arg.value);
         const currentIds = Array.from(this.activeCursors.keys());
-        
+
         // 找出需要移除的
         const toRemove = currentIds.filter(id => !aliveIds.includes(id));
         toRemove.forEach(sessionId => {
@@ -543,7 +555,7 @@ class TuioBridgeServer {
    */
   handleCursor(message) {
     const { action, sessionId, x, y, xSpeed, ySpeed, motionAccel } = message;
-    
+
     switch (action) {
       case 'add':
         this.activeCursors.set(sessionId, { x, y, xSpeed, ySpeed, motionAccel });
@@ -569,7 +581,7 @@ class TuioBridgeServer {
    */
   handleObject(message) {
     const { action, sessionId, symbolId, x, y, angle, xSpeed, ySpeed, rotationSpeed, motionAccel, rotationAccel } = message;
-    
+
     switch (action) {
       case 'add':
         this.activeObjects.set(sessionId, { symbolId, x, y, angle, xSpeed, ySpeed, rotationSpeed, motionAccel, rotationAccel });
@@ -595,7 +607,7 @@ class TuioBridgeServer {
    */
   handleBlob(message) {
     const { action, sessionId, x, y, angle, width, height, area, xSpeed, ySpeed, rotationSpeed, motionAccel, rotationAccel } = message;
-    
+
     switch (action) {
       case 'add':
         this.activeBlobs.set(sessionId, { x, y, angle, width, height, area, xSpeed, ySpeed, rotationSpeed, motionAccel, rotationAccel });
@@ -788,7 +800,7 @@ class TuioBridgeServer {
       ]
     };
     this.sendOSCMessage(fseqMessage);
-    
+
     const fseqObjMessage = {
       address: '/tuio/2Dobj',
       args: [
@@ -797,7 +809,7 @@ class TuioBridgeServer {
       ]
     };
     this.sendOSCMessage(fseqObjMessage);
-    
+
     const fseqBlbMessage = {
       address: '/tuio/2Dblb',
       args: [
@@ -855,45 +867,25 @@ class TuioBridgeServer {
   }
 }
 
-// 启动服务器
-const server = new TuioBridgeServer({
-  wsPort: process.env.WS_PORT || 8080,
-  udpHost: process.env.UDP_HOST || '127.0.0.1',
-  udpPort: process.env.UDP_PORT || 3333,
-  tcpPort: process.env.TCP_PORT || 3333, // TCP服务器端口（接收来自手机的TCP消息）
-  udpListenPort: process.env.UDP_LISTEN_PORT || 3333 // UDP服务器端口（接收来自手机的UDP消息）
-});
+// 获取环境变量
+const WS_PORT = process.env.WS_PORT || 8080;
+const TUIO_UDP_HOST = process.env.TUIO_UDP_HOST || '127.0.0.1';
+const TUIO_UDP_PORT = process.env.TUIO_UDP_PORT || 3333;
+const TUIO_TCP_PORT = process.env.TUIO_TCP_PORT || 3333;
+const TUIO_UDP_LISTEN_PORT = process.env.UDP_LISTEN_PORT || 3333;
 
-try {
+export function startBridge(options = {}) {
+  const server = new TuioBridgeServer({
+    wsPort: options.wsPort || WS_PORT,
+    udpHost: options.udpHost || TUIO_UDP_HOST,
+    udpPort: options.udpPort || TUIO_UDP_PORT,
+    tcpPort: options.tcpPort || TUIO_TCP_PORT,
+    udpListenPort: options.udpListenPort || TUIO_UDP_LISTEN_PORT
+  });
   server.start();
-  console.log('\n' + '='.repeat(60));
-  console.log('[TUIO Bridge] 服务器启动成功！');
-  console.log('[TUIO Bridge] 架构说明：');
-  console.log('  - 发送模式: 前端 → WebSocket(8080) → UDP/OSC');
-  console.log('  - 接收模式: 手机TUIOpad → TCP/UDP(3333) → WebSocket(8080) → 前端');
-  console.log('[TUIO Bridge] 两种模式共用同一个WebSocket服务器，这是正确的设计');
-  console.log('='.repeat(60) + '\n');
-} catch (error) {
-  console.error('[TUIO Bridge] 服务器启动失败:', error);
-  if (error.code === 'EADDRINUSE') {
-    console.error(`[错误] 端口已被占用，请检查：`);
-    console.error(`  - WebSocket端口 ${process.env.WS_PORT || 8080}`);
-    console.error(`  - TCP端口 ${process.env.TCP_PORT || 3333}`);
-    console.error(`  - UDP端口 ${process.env.UDP_LISTEN_PORT || 3333}`);
-  }
-  process.exit(1);
+  return server;
 }
 
-// 优雅关闭
-process.on('SIGINT', () => {
-  console.log('\n[TUIO Bridge] 正在关闭服务器...');
-  server.stop();
-  process.exit(0);
-});
 
-process.on('SIGTERM', () => {
-  console.log('\n[TUIO Bridge] 正在关闭服务器...');
-  server.stop();
-  process.exit(0);
-});
+// 优雅关闭在 start.js 中处理
 

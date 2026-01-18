@@ -1,9 +1,17 @@
-import { spawn, exec, execSync } from 'child_process';
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import path, { dirname, join } from 'path';
+import fs from 'fs';
+import { exec, execSync } from 'child_process';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// 兼容 ESM 和 CJS (用于 pkg 打包)
+let _rootValue;
+try {
+  _rootValue = __dirname;
+} catch (e) {
+  _rootValue = (import.meta && import.meta.url) ? dirname(fileURLToPath(import.meta.url)) : process.cwd();
+}
+const PROJECT_ROOT = _rootValue;
+const __dirname_fix = PROJECT_ROOT;
 
 // 颜色输出辅助函数
 const colors = {
@@ -13,13 +21,17 @@ const colors = {
   green: '\x1b[32m',
   yellow: '\x1b[33m',
   blue: '\x1b[34m',
+  magenta: '\x1b[35m',
   cyan: '\x1b[36m',
 };
 
-function log(service, message, color = 'reset') {
-  const timestamp = new Date().toLocaleTimeString();
+function timestamp() {
+  return new Date().toLocaleTimeString('zh-CN', { hour12: false });
+}
+
+function log(module, message, color = 'reset') {
   const colorCode = colors[color] || colors.reset;
-  console.log(`${colorCode}[${timestamp}] [${service}]${colors.reset} ${message}`);
+  console.log(`${colorCode}[${timestamp()}] [${module}] ${message}${colors.reset}`);
 }
 
 // 自动打开浏览器函数
@@ -82,30 +94,53 @@ function shutdown() {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
+import { startBridge } from './server.js';
+import { startStaticServer } from './static-server.js';
+
 // 启动所有服务
-log('主进程', '正在编译动画模块...', 'bright');
-try {
-  execSync('pnpm --filter led-animation-studio build', { cwd: __dirname, stdio: 'inherit' });
-  log('主进程', '编译完成', 'green');
-} catch (error) {
-  log('主进程', `编译失败: ${error.message}`, 'red');
+if (!process.pkg) {
+  // 在打包后的二进制中跳过编译
+  const animStudioPath = join(PROJECT_ROOT, 'animation-studio');
+  if (fs.existsSync(animStudioPath)) {
+    log('主进程', '正在编译 animation-studio 模块...', 'cyan');
+    try {
+      execSync('pnpm --filter led-animation-studio build', { cwd: PROJECT_ROOT, stdio: 'inherit' });
+      log('主进程', 'animation-studio 编译完成', 'green');
+    } catch (error) {
+      log('主进程', `编译失败: ${error.message}`, 'red');
+    }
+  } else {
+    log('主进程', '未找到 animation-studio 模块，跳过编译', 'yellow');
+  }
+} else {
+  log('主进程', '运行在封装模式，跳过编译步骤', 'cyan');
 }
 
 log('主进程', '开始启动核心服务...', 'bright');
 
 // 1. 启动 WebSocket 桥接服务器 (端口 8080)
-startService('TUIO Bridge', 'node', ['server.js'], {
-  cwd: __dirname,
-  env: { ...process.env, WS_PORT: '8080' },
-});
+log('TUIO Bridge', '启动中...', 'cyan');
+try {
+  startBridge({
+    wsPort: 8080,
+    udpHost: '127.0.0.1',
+    udpPort: 3333,
+    tcpPort: 3333,
+    udpListenPort: 3333
+  });
+} catch (error) {
+  log('TUIO Bridge', `启动失败: ${error.message}`, 'red');
+}
 
 // 等待一小段时间确保服务启动
 setTimeout(() => {
   // 2. 启动静态文件服务器 (端口 8001，默认打开 login.html)
-  startService('Static Server', 'node', ['static-server.js'], {
-    cwd: __dirname,
-    env: { ...process.env, STATIC_PORT: '8001' },
-  });
+  log('Static Server', '启动中...', 'cyan');
+  try {
+    startStaticServer({ port: 8001 });
+  } catch (error) {
+    log('Static Server', `启动失败: ${error.message}`, 'red');
+  }
 
   // 启动后自动打开浏览器
   setTimeout(() => {

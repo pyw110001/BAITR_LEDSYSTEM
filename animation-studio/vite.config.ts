@@ -12,7 +12,7 @@ export default defineConfig(({ mode }) => {
       open: false,
     },
     build: {
-      outDir: '../dist-animation',
+      outDir: '../public/dist-animation',
       emptyOutDir: true,
     },
     plugins: [react()],

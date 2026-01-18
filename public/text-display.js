@@ -12,12 +12,16 @@ class TextDisplayController {
         this.animationFrame = null;
         this.position = 0;
         this.lastTime = Date.now();
+        this.ws = null;
+        this.isConnected = false;
 
         this.initializeElements();
         this.attachEventListeners();
         this.initializeColorPresets();
         this.startPreviewAnimation();
         this.updateCharCount();
+        console.log('文字控制模块初始化成功');
+        this.connect();
     }
 
     initializeElements() {
@@ -148,10 +152,10 @@ class TextDisplayController {
         this.textColor = color;
         this.colorPicker.value = color;
         this.colorInput.value = color;
-        
+
         // 更新预设按钮状态
         document.querySelectorAll('.color-preset').forEach(btn => {
-            if (btn.style.backgroundColor === color || 
+            if (btn.style.backgroundColor === color ||
                 this.rgbToHex(btn.style.backgroundColor) === color) {
                 btn.classList.add('active');
             } else {
@@ -179,16 +183,16 @@ class TextDisplayController {
         this.ledText.textContent = this.text || '请输入文字...';
         this.ledText.style.fontFamily = this.font;
         this.ledText.style.color = this.textColor;
-        
+
         // 更新字号
         const fontSizeMap = {
             1: '1rem', 2: '1.5rem', 3: '2rem', 4: '2.5rem', 5: '3rem'
         };
         this.ledText.style.fontSize = fontSizeMap[this.fontSize];
-        
+
         // 更新网格颜色
         this.ledGrid.style.color = this.textColor;
-        
+
         // 更新预览信息
         this.previewFont.textContent = this.font;
         this.previewFontSize.textContent = this.fontSize;
@@ -251,52 +255,101 @@ class TextDisplayController {
     }
 
     handleSend() {
+        if (!this.isConnected) {
+            alert('未连接到服务器，请重试');
+            this.connect();
+            return;
+        }
+
         this.sendStatus = 'sending';
         this.sendButton.disabled = true;
         this.sendButton.classList.add('sending');
         this.sendButton.innerHTML = '<div class="spinner"></div><span>发送中...</span>';
 
-        // 模拟发送
-        setTimeout(() => {
-            if (Math.random() > 0.1) {
-                // 成功
+        const message = {
+            type: 'led_text',
+            text: this.text,
+            font: this.font,
+            fontSize: this.fontSize,
+            color: this.textColor,
+            direction: this.scrollDirection,
+            speed: this.scrollSpeed,
+            duration: this.stayDuration
+        };
+
+        try {
+            this.ws.send(JSON.stringify(message));
+
+            // 收到回复前先显示成功 (模拟，实际可监听服务器回复)
+            setTimeout(() => {
                 this.sendStatus = 'success';
                 this.sendButton.classList.remove('sending');
                 this.sendButton.classList.add('success');
                 this.sendButton.innerHTML = '<span>✓ 发送成功</span>';
-                
+
                 setTimeout(() => {
                     this.sendStatus = 'idle';
                     this.sendButton.disabled = false;
                     this.sendButton.classList.remove('success');
                     this.sendButton.innerHTML = '<span>发送到LED灯带</span>';
                 }, 2000);
-            } else {
-                // 失败
-                this.sendStatus = 'error';
-                this.sendButton.classList.remove('sending');
-                this.sendButton.classList.add('error');
-                this.sendButton.innerHTML = '<span>✗ 发送失败</span>';
-                
-                setTimeout(() => {
-                    this.sendStatus = 'idle';
-                    this.sendButton.disabled = false;
-                    this.sendButton.classList.remove('error');
-                    this.sendButton.innerHTML = '<span>发送到LED灯带</span>';
-                }, 3000);
-            }
-        }, 1500);
+            }, 500);
+        } catch (error) {
+            this.sendStatus = 'error';
+            this.sendButton.classList.remove('sending');
+            this.sendButton.classList.add('error');
+            this.sendButton.innerHTML = '<span>✗ 发送失败</span>';
+            console.error('发送失败:', error);
+
+            setTimeout(() => {
+                this.sendStatus = 'idle';
+                this.sendButton.disabled = false;
+                this.sendButton.classList.remove('error');
+                this.sendButton.innerHTML = '<span>发送到LED灯带</span>';
+            }, 3000);
+        }
+    }
+
+    connect() {
+        const hostname = window.location.hostname || 'localhost';
+        const wsUrl = `ws://${hostname}:8080`;
+        console.log(`文字模块尝试连接: ${wsUrl}`);
+        try {
+            this.ws = new WebSocket(wsUrl);
+
+            this.ws.onopen = () => {
+                this.isConnected = true;
+                console.log('文字模块已连接到 WebSocket 服务器');
+            };
+
+            this.ws.onmessage = (event) => {
+                console.log('文字模块收到消息:', event.data);
+            };
+
+            this.ws.onerror = (error) => {
+                console.error('文字模块 WebSocket 错误:', error);
+            };
+
+            this.ws.onclose = () => {
+                this.isConnected = false;
+                console.log('文字模块 WebSocket 连接已关闭');
+                // 3秒后尝试重连
+                setTimeout(() => this.connect(), 3000);
+            };
+        } catch (error) {
+            console.error('文字模块连接失败:', error);
+        }
     }
 
     transitionToPage(url) {
         const overlay = document.createElement('div');
         overlay.style.cssText = 'position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #0a1628; z-index: 9999; opacity: 0; transition: opacity 0.4s ease;';
         document.body.appendChild(overlay);
-        
+
         setTimeout(() => {
             overlay.style.opacity = '1';
         }, 10);
-        
+
         setTimeout(() => {
             window.location.href = url;
         }, 400);

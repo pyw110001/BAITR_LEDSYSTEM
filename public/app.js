@@ -11,10 +11,11 @@ class TuioWebSocketClient {
         this.sessionIdCounter = 0;
         this.frameCounter = 0;
         this.frameInterval = null;
-        
+
         this.initializeElements();
         this.attachEventListeners();
         this.updateModeUI();
+        this.log('TUIO 客户端已启动', 'info');
     }
 
     initializeElements() {
@@ -40,7 +41,7 @@ class TuioWebSocketClient {
         this.logArea = document.getElementById('logArea');
         this.activeCursorsDisplay = document.getElementById('activeCursors');
         this.totalFramesDisplay = document.getElementById('totalFrames');
-        
+
         // 获取本机IP地址
         this.updateLocalIP();
     }
@@ -48,11 +49,11 @@ class TuioWebSocketClient {
     async updateLocalIP() {
         try {
             // 尝试通过WebRTC获取本地IP
-            const pc = new RTCPeerConnection({iceServers: []});
+            const pc = new RTCPeerConnection({ iceServers: [] });
             pc.createDataChannel('');
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            
+
             pc.onicecandidate = (event) => {
                 if (event.candidate) {
                     const candidate = event.candidate.candidate;
@@ -63,7 +64,7 @@ class TuioWebSocketClient {
                     }
                 }
             };
-            
+
             // 超时处理
             setTimeout(() => {
                 pc.close();
@@ -77,10 +78,10 @@ class TuioWebSocketClient {
         // 模式切换
         this.modeSendBtn.addEventListener('click', () => this.setMode('send'));
         this.modeReceiveBtn.addEventListener('click', () => this.setMode('receive'));
-        
+
         this.connectBtn.addEventListener('click', () => this.toggleConnection());
         this.resetBtn.addEventListener('click', () => this.reset());
-        
+
         // 触摸区域事件（仅在发送模式下启用）
         this.touchArea.addEventListener('mousedown', (e) => {
             if (this.mode === 'send') this.handlePointerStart(e);
@@ -88,7 +89,7 @@ class TuioWebSocketClient {
         this.touchArea.addEventListener('touchstart', (e) => {
             if (this.mode === 'send') this.handleTouchStart(e);
         });
-        
+
         // 全局事件（用于跟踪移动和结束）
         document.addEventListener('mousemove', (e) => {
             if (this.mode === 'send') this.handlePointerMove(e);
@@ -165,7 +166,7 @@ class TuioWebSocketClient {
         entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
         this.logArea.appendChild(entry);
         this.logArea.scrollTop = this.logArea.scrollHeight;
-        
+
         // 限制日志条目数量
         if (this.logArea.children.length > 100) {
             this.logArea.removeChild(this.logArea.firstChild);
@@ -181,14 +182,13 @@ class TuioWebSocketClient {
     }
 
     connect() {
-        // 接收模式下使用默认WebSocket地址，发送模式下使用用户输入的地址
-        let wsUrl;
+        // 自动检测主机名，优化打包环境连接
+        const hostname = window.location.hostname || 'localhost';
+        const wsUrl = this.mode === 'receive' ? `ws://${hostname}:8080` : this.wsUrlInput.value.trim();
+
         if (this.mode === 'receive') {
-            wsUrl = 'ws://localhost:8080'; // 接收模式使用默认地址
-            this.log('接收模式：正在连接到默认WebSocket服务器 (ws://localhost:8080)...', 'info');
-            this.log('提示：请确保服务器已启动 (运行 pnpm start)', 'info');
+            this.log(`正在连接到 WebSocket 服务器 (${wsUrl})...`, 'info');
         } else {
-            wsUrl = this.wsUrlInput.value.trim();
             if (!wsUrl) {
                 this.log('请输入 WebSocket 服务器地址', 'error');
                 return;
@@ -197,7 +197,7 @@ class TuioWebSocketClient {
 
         try {
             this.ws = new WebSocket(wsUrl);
-            
+
             // 设置连接超时
             const connectTimeout = setTimeout(() => {
                 if (!this.isConnected && this.ws.readyState === WebSocket.CONNECTING) {
@@ -206,7 +206,7 @@ class TuioWebSocketClient {
                     this.log('请检查：1. 服务器是否已启动 (运行 pnpm start) 2. 端口8080是否被占用', 'error');
                 }
             }, 5000);
-            
+
             this.ws.onopen = () => {
                 clearTimeout(connectTimeout);
                 this.isConnected = true;
@@ -224,7 +224,7 @@ class TuioWebSocketClient {
                 try {
                     const message = JSON.parse(event.data);
                     console.log('[前端] 收到WebSocket消息:', message);
-                    
+
                     if (this.mode === 'receive' && message.source === 'tuio-app') {
                         // 接收模式：处理来自TUIO app的消息
                         console.log('[前端] 处理TUIO app消息:', message.type, message.action);
@@ -295,7 +295,7 @@ class TuioWebSocketClient {
             this.connectBtn.textContent = '连接服务器';
             this.resetBtn.disabled = true;
         }
-        
+
         const udpHost = this.udpHostInput.value || '127.0.0.1';
         const udpPort = this.udpPortInput.value || '3333';
         this.udpTarget.textContent = `${udpHost}:${udpPort}`;
@@ -304,7 +304,7 @@ class TuioWebSocketClient {
     getTouchPosition(event) {
         const rect = this.touchArea.getBoundingClientRect();
         let x, y;
-        
+
         if (event.touches) {
             // 触摸事件
             const touch = event.touches[0] || event.changedTouches[0];
@@ -315,25 +315,25 @@ class TuioWebSocketClient {
             x = event.clientX - rect.left;
             y = event.clientY - rect.top;
         }
-        
+
         // 归一化坐标 (0-1)
         const normalizedX = Math.max(0, Math.min(1, x / rect.width));
         const normalizedY = Math.max(0, Math.min(1, y / rect.height));
-        
+
         return { x: normalizedX, y: normalizedY, rawX: x, rawY: y };
     }
 
     handlePointerStart(event) {
         if (event.button !== 0) return; // 只处理左键
         event.preventDefault();
-        
+
         const pos = this.getTouchPosition(event);
         this.addCursor(event.pointerId || Date.now(), pos.x, pos.y, pos.rawX, pos.rawY);
     }
 
     handleTouchStart(event) {
         event.preventDefault();
-        
+
         for (let i = 0; i < event.touches.length; i++) {
             const touch = event.touches[i];
             const pos = this.getTouchPosition({
@@ -348,7 +348,7 @@ class TuioWebSocketClient {
     handlePointerMove(event) {
         if (event.buttons !== 1) return; // 只在按下时移动
         event.preventDefault();
-        
+
         const pos = this.getTouchPosition(event);
         const sessionId = event.pointerId || Array.from(this.cursors.keys())[0];
         if (sessionId !== undefined) {
@@ -358,7 +358,7 @@ class TuioWebSocketClient {
 
     handleTouchMove(event) {
         event.preventDefault();
-        
+
         for (let i = 0; i < event.touches.length; i++) {
             const touch = event.touches[i];
             const pos = this.getTouchPosition({
@@ -379,7 +379,7 @@ class TuioWebSocketClient {
 
     handleTouchEnd(event) {
         event.preventDefault();
-        
+
         for (let i = 0; i < event.changedTouches.length; i++) {
             const touch = event.changedTouches[i];
             this.removeCursor(touch.identifier);
@@ -584,7 +584,7 @@ class TuioWebSocketClient {
     handleServerCursor(message) {
         const { action, sessionId, x, y, xSpeed, ySpeed, motionAccel } = message;
         const rect = this.touchArea.getBoundingClientRect();
-        
+
         // 将归一化坐标转换为像素坐标
         const rawX = x * rect.width;
         const rawY = y * rect.height;
@@ -593,7 +593,7 @@ class TuioWebSocketClient {
             // 查找或创建光标
             let cursor = null;
             let identifier = null;
-            
+
             // 通过sessionId查找现有的光标
             for (const [id, c] of this.cursors.entries()) {
                 if (c.sessionId === sessionId) {
@@ -691,7 +691,7 @@ class TuioWebSocketClient {
 // 初始化应用
 document.addEventListener('DOMContentLoaded', () => {
     new TuioWebSocketClient();
-    
+
     // 页面加载动画
     setTimeout(() => {
         document.body.style.opacity = '1';

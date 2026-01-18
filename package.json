@@ -2,7 +2,8 @@
   "name": "tuio-websocket-bridge",
   "version": "1.0.0",
   "description": "WebSocket to TUIO/OSC bridge for web-based touch applications",
-  "main": "server.js",
+  "main": "backend.cjs",
+  "bin": "backend.cjs",
   "type": "module",
   "scripts": {
     "start": "node start.js",
@@ -11,7 +12,19 @@
     "server:static": "node static-server.js",
     "animation:dev": "pnpm --filter led-animation-studio dev",
     "animation:build": "pnpm --filter led-animation-studio build",
-    "animation:preview": "pnpm --filter led-animation-studio preview"
+    "animation:preview": "pnpm --filter led-animation-studio preview",
+    "product:bundle": "npx esbuild start.js --bundle --platform=node --format=cjs --outfile=backend.cjs --external:pkg",
+    "product:build": "pnpm run animation:build && pnpm run product:bundle && pkg . -o dist-product/TuioBridge.exe"
+  },
+  "pkg": {
+    "assets": [
+      "backend.cjs",
+      "public/**/*"
+    ],
+    "targets": [
+      "node18-win-x64"
+    ],
+    "outputPath": "dist-product"
   },
   "keywords": [
     "tuio",
@@ -23,17 +36,18 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "ws": "^8.14.2",
+    "lucide-react": "^0.555.0",
     "osc-min": "^1.1.2",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "lucide-react": "^0.555.0"
+    "ws": "^8.14.2"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@vitejs/plugin-react": "^5.0.0",
+    "esbuild": "^0.27.2",
+    "pkg": "^5.8.1",
     "typescript": "~5.8.2",
     "vite": "^6.2.0"
   }
 }
-

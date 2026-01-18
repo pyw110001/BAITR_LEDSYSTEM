@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -28,6 +29,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -498,7 +500,7 @@
             position: absolute;
             inset: 0;
             opacity: 0.1;
-            background-image: 
+            background-image:
                 radial-gradient(circle, currentColor 1px, transparent 1px),
                 radial-gradient(circle, currentColor 1px, transparent 1px);
             background-size: 10px 10px;
@@ -511,7 +513,7 @@
             top: 50%;
             left: 0;
             transform: translateY(-50%);
-            text-shadow: 
+            text-shadow:
                 0 0 10px currentColor,
                 0 0 20px currentColor,
                 0 0 30px currentColor,
@@ -607,7 +609,9 @@
         }
 
         @keyframes spin {
-            to { transform: rotate(360deg); }
+            to {
+                transform: rotate(360deg);
+            }
         }
 
         @media (max-width: 1024px) {
@@ -630,11 +634,13 @@
         }
     </style>
 </head>
+
 <body>
     <!-- 返回按钮 -->
     <a href="navigation.html" class="back-button" id="backButton">
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M19 12H5M12 19l-7-7 7-7"/>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2" stroke-linecap="round"
+            stroke-linejoin="round">
+            <path d="M19 12H5M12 19l-7-7 7-7" />
         </svg>
         <span>返回导览</span>
     </a>
@@ -661,12 +667,8 @@
                 <div class="card-body">
                     <div class="text-input-group">
                         <label class="label">输入文字</label>
-                        <textarea 
-                            id="textInput" 
-                            class="textarea" 
-                            placeholder="请输入要显示的文字..."
-                            maxlength="200"
-                        >欢迎使用LED灯带控制系统</textarea>
+                        <textarea id="textInput" class="textarea" placeholder="请输入要显示的文字..."
+                            maxlength="200">欢迎使用LED灯带控制系统</textarea>
                         <div class="char-count"><span id="charCount">0</span> / 200</div>
                     </div>
 
@@ -685,14 +687,7 @@
                             <label class="label">字号大小</label>
                             <span class="slider-value">级别 <span id="fontSizeValue">3</span></span>
                         </div>
-                        <input 
-                            type="range" 
-                            id="fontSizeSlider" 
-                            class="slider" 
-                            min="1" 
-                            max="5" 
-                            value="3"
-                        />
+                        <input type="range" id="fontSizeSlider" class="slider" min="1" max="5" value="3" />
                         <div class="slider-range">
                             <span>最小</span>
                             <span>最大</span>
@@ -704,7 +699,8 @@
                         <div class="color-presets" id="colorPresets"></div>
                         <div class="color-custom">
                             <input type="color" id="colorPicker" class="color-picker" value="#00d9ff">
-                            <input type="text" id="colorInput" class="color-input" value="#00d9ff" placeholder="#00d9ff">
+                            <input type="text" id="colorInput" class="color-input" value="#00d9ff"
+                                placeholder="#00d9ff">
                         </div>
                     </div>
                 </div>
@@ -722,19 +718,22 @@
                         <div class="direction-buttons">
                             <button class="direction-btn active" data-direction="left-to-right">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M13 7l5 5m0 0l-5 5m5-5H6" />
                                 </svg>
                                 <span>左 → 右</span>
                             </button>
                             <button class="direction-btn" data-direction="right-to-left">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M11 17l-5-5m0 0l5-5m-5 5h12" />
                                 </svg>
                                 <span>右 → 左</span>
                             </button>
                             <button class="direction-btn" data-direction="top-to-bottom">
                                 <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M19 14l-7 7m0 0l-7-7m7 7V3" />
                                 </svg>
                                 <span>上 → 下</span>
                             </button>
@@ -762,7 +761,8 @@
                         <div class="duration-input-group">
                             <input type="number" id="durationInput" class="duration-input" min="0" max="10" value="3">
                             <span style="color: rgba(34, 211, 238, 0.6);">秒</span>
-                            <input type="range" id="durationSlider" class="duration-slider slider" min="0" max="10" value="3">
+                            <input type="range" id="durationSlider" class="duration-slider slider" min="0" max="10"
+                                value="3">
                         </div>
                         <p style="font-size: 0.75rem; color: rgba(6, 182, 212, 0.6); margin-top: 8px;">
                             文字完全显示后的停留时长 (0-10秒)
@@ -801,7 +801,8 @@
                         <div class="info-item">
                             <div class="info-label">颜色</div>
                             <div class="info-color">
-                                <div class="info-color-box" id="previewColorBox" style="background-color: #00d9ff;"></div>
+                                <div class="info-color-box" id="previewColorBox" style="background-color: #00d9ff;">
+                                </div>
                                 <span class="info-value" id="previewColor">#00d9ff</span>
                             </div>
                         </div>
@@ -818,5 +819,5 @@
 
     <script src="text-display.js"></script>
 </body>
-</html>
 
+</html>
