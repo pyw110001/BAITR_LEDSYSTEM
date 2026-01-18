@@ -6,7 +6,7 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.STATIC_PORT || 8081;
+const PORT = process.env.STATIC_PORT || 8001;
 
 const MIME_TYPES = {
   '.html': 'text/html',
@@ -28,22 +28,33 @@ const MIME_TYPES = {
 const server = http.createServer((req, res) => {
   // 解析请求路径
   let filePath = '.' + req.url;
-  
+
   // 默认访问 login.html
   if (filePath === './') {
     filePath = './login.html';
   }
-  
+
   // 移除查询参数
   filePath = filePath.split('?')[0];
-  
+
+  // 特殊路由处理：将 animation.html 映射到 dist-animation/index.html
+  if (filePath === './animation.html') {
+    filePath = './dist-animation/index.html';
+  } else if (filePath.startsWith('./assets/') && !fs.existsSync(path.join(__dirname, filePath))) {
+    // 如果根目录找不到 assets，尝试在 dist-animation 找
+    const animAssetsPath = path.join(__dirname, 'dist-animation', filePath);
+    if (fs.existsSync(animAssetsPath)) {
+      filePath = './dist-animation' + filePath.substring(1);
+    }
+  }
+
   // 获取文件扩展名
   const extname = String(path.extname(filePath)).toLowerCase();
   const contentType = MIME_TYPES[extname] || 'application/octet-stream';
-  
+
   // 构建完整文件路径
   const fullPath = path.join(__dirname, filePath);
-  
+
   // 检查文件是否存在
   fs.readFile(fullPath, (error, content) => {
     if (error) {
