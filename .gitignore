@@ -31,6 +31,10 @@ desktop.ini
 # Build outputs
 dist/
 build/
+dist-product/
 *.exe
 *.dll
+
+# Vercel
+.vercel/
 
