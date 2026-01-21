@@ -47,6 +47,7 @@ export function startStaticServer(options = {}) {
 
     // 构建完整文件路径
     // 如果请求的是 /animation.html 或以 /assets/ 开头，特殊处理
+    let fullPath;
     if (filePath === './animation.html') {
       fullPath = path.join(PROJECT_ROOT, 'public/dist-animation/index.html');
     } else if (filePath.startsWith('./assets/') && !fs.existsSync(path.join(PROJECT_ROOT, 'public', filePath))) {
