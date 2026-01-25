@@ -153,7 +153,7 @@ const App: React.FC = () => {
         <div className="w-[450px] flex flex-col h-full min-h-0">
           <div className="h-20 flex-shrink-0"></div> {/* Spacer for fixed buttons */}
 
-          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin min-h-0">
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin min-h-0" style={{ WebkitOverflowScrolling: 'touch' }}>
             <section className="mb-8">
               <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
                 <span className="w-1.5 h-1.5 rounded-full bg-led-accent"></span>

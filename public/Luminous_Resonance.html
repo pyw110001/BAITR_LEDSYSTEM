@@ -41,6 +41,25 @@
             height: 100vh;
             color: var(--text-main);
             overflow: hidden;
+            touch-action: none;
+            /* Prevent browser handling of touch gestures */
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        /* Allow selection in inputs */
+        input,
+        select,
+        textarea {
+            -webkit-user-select: text;
+            -khtml-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
         }
 
         .container {
@@ -66,6 +85,7 @@
             position: relative;
             z-index: 50;
             height: 100vh;
+            -webkit-overflow-scrolling: touch;
         }
 
         .sidebar.collapsed {
@@ -206,6 +226,56 @@
             height: 100vh;
             background: #05050a;
             position: relative;
+            touch-action: none;
+        }
+
+        /* iPad/Tablet Responsive Adjustments */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: var(--sidebar-width, 280px);
+                padding: 16px;
+            }
+
+            .sidebar h1 {
+                font-size: 20px;
+                margin-top: 70px;
+            }
+
+            .control-section h3 {
+                font-size: 14px;
+            }
+
+            .button,
+            .back-button,
+            .toggle-btn {
+                padding: 12px 14px;
+                /* Larger tap targets */
+            }
+
+            #custom-res-controls {
+                gap: 4px;
+            }
+        }
+
+        /* Portrait Mode Support */
+        @media (max-width: 768px) {
+            .container {
+                position: relative;
+            }
+
+            .sidebar {
+                position: absolute;
+                left: 0;
+                top: 0;
+                height: 100%;
+                z-index: 100;
+                box-shadow: 20px 0 50px rgba(0, 0, 0, 0.8);
+            }
+
+            .resizer {
+                display: none !important;
+                /* Resizer hidden in absolute mode */
+            }
         }
 
         #canvas-container {
@@ -525,6 +595,9 @@
         let timeOffset = 0;
 
         function setup() {
+            // Set pixel density for retina displays
+            pixelDensity(window.devicePixelRatio || 1);
+
             let canvas = createCanvas(1920, 1080);
             canvas.parent('canvas-container');
 
@@ -1104,33 +1177,58 @@
             sidebar.style.setProperty('--sidebar-width', lastSidebarWidth + 'px');
 
             // Draggable logic
-            resizer.addEventListener('mousedown', function (e) {
+            function startDragging(e) {
                 isSidebarDragging = true;
                 document.body.style.cursor = 'col-resize';
                 resizer.classList.add('dragging');
-                e.preventDefault();
-            });
+                if (e.targetTouches && e.targetTouches[0]) {
+                    // Prevent page scrolling during touch drag
+                    e.preventDefault();
+                }
+            }
 
-            document.addEventListener('mousemove', function (e) {
+            function drag(e) {
                 if (!isSidebarDragging) return;
 
-                let newWidth = e.clientX;
+                let clientX;
+                if (e.clientX !== undefined) {
+                    clientX = e.clientX;
+                } else if (e.targetTouches && e.targetTouches[0]) {
+                    clientX = e.targetTouches[0].clientX;
+                } else {
+                    return;
+                }
+
+                let newWidth = clientX;
                 if (newWidth < 250) newWidth = 250;
                 if (newWidth > 600) newWidth = 600;
 
                 lastSidebarWidth = newWidth;
                 sidebar.style.setProperty('--sidebar-width', newWidth + 'px');
                 updateCanvasScale();
-            });
 
-            document.addEventListener('mouseup', function () {
+                // Prevent scrolling on touch devices
+                if (e.type === 'touchmove') e.preventDefault();
+            }
+
+            function stopDragging() {
                 if (isSidebarDragging) {
                     isSidebarDragging = false;
                     document.body.style.cursor = 'default';
                     resizer.classList.remove('dragging');
                     updateCanvasScale();
                 }
-            });
+            }
+
+            // Mouse Events
+            resizer.addEventListener('mousedown', startDragging);
+            document.addEventListener('mousemove', drag);
+            document.addEventListener('mouseup', stopDragging);
+
+            // Touch Events (iPad/Mobile)
+            resizer.addEventListener('touchstart', startDragging, { passive: false });
+            document.addEventListener('touchmove', drag, { passive: false });
+            document.addEventListener('touchend', stopDragging);
         });
     </script>
 </body>
