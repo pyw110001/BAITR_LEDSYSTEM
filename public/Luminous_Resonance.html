@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Luminous Resonance - Interactive Particle System</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.7.0/p5.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Lora:wght@400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        /* Anthropic Brand Colors */
+        :root {
+            /* Theme Colors (Default Dark) */
+            --bg-dark: #0a0a09;
+            --sidebar-bg: rgba(18, 18, 17, 0.95);
+            --text-main: #faf9f5;
+            --text-muted: #b0aea5;
+            --border-color: #30302e;
+            --input-bg: #1a1a1c;
+
+            /* Brand Pallette */
+            --anthropic-orange: #d97757;
+            --anthropic-blue: #6a9bcc;
+            --anthropic-green: #788c5d;
+            --anthropic-light-gray: #30302e;
+            /* Darker for dark mode */
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: var(--bg-dark);
+            height: 100vh;
+            color: var(--text-main);
+            overflow: hidden;
+        }
+
+        .container {
+            display: flex;
+            min-height: 100vh;
+            padding: 0px;
+            gap: 0px;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: var(--sidebar-width, 320px);
+            min-width: 0;
+            flex-shrink: 0;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(10px);
+            padding: 24px;
+            border-right: 1px solid var(--border-color);
+            box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
+            overflow-y: auto;
+            overflow-x: hidden;
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            position: relative;
+            z-index: 50;
+            height: 100vh;
+        }
+
+        .sidebar.collapsed {
+            width: 0 !important;
+            padding: 0;
+            opacity: 0;
+            border-right: none;
+            pointer-events: none;
+            transform: translateX(-20px);
+        }
+
+        /* Resizer Handle */
+        .resizer {
+            width: 6px;
+            height: 100vh;
+            cursor: col-resize;
+            background: rgba(255, 255, 255, 0.05);
+            position: relative;
+            z-index: 100;
+            transition: background 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .resizer:hover,
+        .resizer.dragging {
+            background: var(--anthropic-orange);
+            box-shadow: 0 0 10px rgba(217, 119, 87, 0.5);
+        }
+
+        .resizer.hidden {
+            display: none;
+        }
+
+        .sidebar h1 {
+            font-family: 'Lora', serif;
+            font-size: 24px;
+            font-weight: 500;
+            color: var(--text-main);
+            margin-bottom: 8px;
+            margin-top: 60px;
+            /* Spacer for back/toggle buttons */
+            white-space: nowrap;
+        }
+
+        .sidebar .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            margin-bottom: 32px;
+            line-height: 1.4;
+        }
+
+        /* Fixed Navigation Controls */
+        .nav-controls {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 110;
+            display: flex;
+            gap: 12px;
+        }
+
+        .back-button,
+        .toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 10px 16px;
+            background: rgba(48, 48, 46, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .toggle-btn {
+            background: rgba(217, 119, 87, 0.15);
+            border-color: rgba(217, 119, 87, 0.4);
+            color: var(--anthropic-orange);
+            min-width: 120px;
+        }
+
+        /* Control Sections */
+        .control-section {
+            margin-bottom: 32px;
+            min-width: 200px;
+        }
+
+        .control-section h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+        }
+
+        .control-section h3::before {
+            content: '•';
+            color: var(--anthropic-orange);
+            font-weight: bold;
+        }
+
+        /* Custom Res Control Fix */
+        #custom-res-controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 8px;
+            align-items: center;
+        }
+
+        #custom-res-controls input {
+            min-width: 60px;
+            flex: 1;
+        }
+
+        .back-button svg,
+        .toggle-btn svg {
+            width: 18px;
+            height: 18px;
+        }
+
+        /* Canvas Area */
+        .canvas-area {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 0;
+            height: 100vh;
+            background: #05050a;
+            position: relative;
+        }
+
+        #canvas-container {
+            width: 100%;
+            max-width: none;
+            height: 100%;
+            border-radius: 0;
+            overflow: hidden;
+            box-shadow: none;
+            background: #000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        #canvas-container canvas {
+            display: block;
+            max-width: 95% !important;
+            max-height: 95% !important;
+            width: auto !important;
+            height: auto !important;
+            border-radius: 12px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Loading State */
+        .loading {
+            position: absolute;
+            inset: 0;
+            background: #0a0a09;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+
+        /* Interactive hint */
+        .interaction-hint {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            pointer-events: none;
+            opacity: 0.8;
+            transition: opacity 0.3s ease;
+            z-index: 60;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="nav-controls">
+        <a href="navigation.html" class="back-button">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back</span>
+        </a>
+        <button id="toggle-sidebar" class="toggle-btn" onclick="toggleSidebar()">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round"
+                    d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4" />
+            </svg>
+            <span>Open Settings</span>
+        </button>
+    </div>
+
+    <div class="container">
+        <!-- Control Sidebar -->
+        <div class="sidebar collapsed" id="settings-sidebar">
+            <h1>Luminous Resonance</h1>
+            <div class="subtitle">Interactive particle field responding to mouse movement with organic flow dynamics
+            </div>
+
+            <!-- Resolution Section -->
+            <div class="control-section">
+                <h3>Canvas Resolution</h3>
+                <select id="res-select" class="seed-input" onchange="changeResolution(this.value)"
+                    style="font-family: inherit; font-size: 14px;">
+                    <option value="1920x1080">1920 x 1080 (FHD)</option>
+                    <option value="1280x720">1280 x 720 (HD)</option>
+                    <option value="1024x768">1024 x 768</option>
+                    <option value="800x600">800 x 600</option>
+                    <option value="640x480">640 x 480</option>
+                    <option value="custom">Custom...</option>
+                </select>
+                <div id="custom-res-controls" style="display: flex; gap: 8px; margin-top: 8px; align-items: center;">
+                    <input type="number" id="custom-w" class="seed-input" placeholder="W"
+                        style="margin-bottom: 0; flex: 1;" value="1920">
+                    <span style="color: var(--text-muted);">×</span>
+                    <input type="number" id="custom-h" class="seed-input" placeholder="H"
+                        style="margin-bottom: 0; flex: 1;" value="1080">
+                    <button class="button secondary" style="width: auto; padding: 10px; margin-bottom: 0;"
+                        onclick="applyCustomRes()">Apply</button>
+                </div>
+            </div>
+
+            <!-- Seed Section -->
+            <div class="control-section">
+                <h3>Seed</h3>
+                <input type="number" id="seed-input" class="seed-input" value="12345" onchange="updateSeed()">
+                <div class="seed-controls">
+                    <button class="button secondary" onclick="previousSeed()">← Prev</button>
+                    <button class="button secondary" onclick="nextSeed()">Next →</button>
+                </div>
+                <button class="button tertiary regen-button" onclick="randomSeedAndUpdate()">↻ Random</button>
+            </div>
+
+            <!-- Parameters Section -->
+            <div class="control-section">
+                <h3>Parameters</h3>
+
+                <!-- Particle Count -->
+                <div class="control-group">
+                    <label>Particle Count</label>
+                    <div class="slider-container">
+                        <input type="range" id="particleCount" min="1000" max="20000" step="500" value="6500"
+                            oninput="updateParam('particleCount', this.value)">
+                        <span class="value-display" id="particleCount-value">6500</span>
+                    </div>
+                </div>
+
+                <!-- Flow Speed -->
+                <div class="control-group">
+                    <label>Flow Speed</label>
+                    <div class="slider-container">
+                        <input type="range" id="flowSpeed" min="0.1" max="3.0" step="0.1" value="1.5"
+                            oninput="updateParam('flowSpeed', this.value)">
+                        <span class="value-display" id="flowSpeed-value">1.5</span>
+                    </div>
+                </div>
+
+                <!-- Noise Scale -->
+                <div class="control-group">
+                    <label>Noise Scale</label>
+                    <div class="slider-container">
+                        <input type="range" id="noiseScale" min="0.001" max="0.02" step="0.001" value="0.001"
+                            oninput="updateParam('noiseScale', this.value)">
+                        <span class="value-display" id="noiseScale-value">0.001</span>
+                    </div>
+                </div>
+
+                <!-- Trail Persistence -->
+                <div class="control-group">
+                    <label>Trail Persistence</label>
+                    <div class="slider-container">
+                        <input type="range" id="trailPersistence" min="0.5" max="2.0" step="0.05" value="0.9"
+                            oninput="updateParam('trailPersistence', this.value)">
+                        <span class="value-display" id="trailPersistence-value">0.9</span>
+                    </div>
+                </div>
+
+                <!-- Attraction Force -->
+                <div class="control-group">
+                    <label>Vortex Strength</label>
+                    <div class="slider-container">
+                        <input type="range" id="attractionForce" min="0" max="3.0" step="0.1" value="0.3"
+                            oninput="updateParam('attractionForce', this.value)">
+                        <span class="value-display" id="attractionForce-value">0.3</span>
+                    </div>
+                </div>
+
+                <!-- Attraction Range -->
+                <div class="control-group">
+                    <label>Vortex Range</label>
+                    <div class="slider-container">
+                        <input type="range" id="attractionRange" min="50" max="800" step="10" value="600"
+                            oninput="updateParam('attractionRange', this.value)">
+                        <span class="value-display" id="attractionRange-value">600</span>
+                    </div>
+                </div>
+
+                <!-- Repulsion on Click -->
+                <div class="control-group">
+                    <label>Click Repulsion</label>
+                    <div class="slider-container">
+                        <input type="range" id="repulsionForce" min="0" max="10" step="0.5" value="5"
+                            oninput="updateParam('repulsionForce', this.value)">
+                        <span class="value-display" id="repulsionForce-value">5</span>
+                    </div>
+                </div>
+
+                <!-- Particle Size -->
+                <div class="control-group">
+                    <label>Particle Size</label>
+                    <div class="slider-container">
+                        <input type="range" id="particleSize" min="0.5" max="3.0" step="0.1" value="2.5"
+                            oninput="updateParam('particleSize', this.value)">
+                        <span class="value-display" id="particleSize-value">2.5</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Upload Section -->
+            <div class="control-section">
+                <h3>Image Color Mapping</h3>
+
+                <div class="control-group">
+                    <label>Upload Image</label>
+                    <input type="file" id="imageUpload" accept="image/*"
+                        style="width: 100%; padding: 8px; border: 1px solid #e8e6dc; border-radius: 6px; font-size: 12px;"
+                        onchange="handleImageUpload(event)">
+                </div>
+
+                <div class="control-group">
+                    <label>Use Image Colors</label>
+                    <div class="slider-container">
+                        <input type="checkbox" id="useImageColors" onchange="toggleImageColors(this.checked)"
+                            style="width: 20px; height: 20px;">
+                        <span style="margin-left: 8px; font-size: 12px; color: var(--anthropic-mid-gray);">Enable color
+                            mapping from image</span>
+                    </div>
+                </div>
+
+                <div id="image-info"
+                    style="font-size: 11px; color: var(--anthropic-mid-gray); margin-top: 8px; display: none;">
+                    Image loaded: <span id="image-name">-</span>
+                </div>
+            </div>
+
+            <!-- Colors Section -->
+            <div class="control-section">
+                <h3>Colors</h3>
+
+                <!-- Color 1 - Cyan -->
+                <div class="color-group">
+                    <label>Core Cyan</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color1" value="#00ffff" onchange="updateColor('color1', this.value)">
+                        <span class="color-value" id="color1-value">#00ffff</span>
+                    </div>
+                </div>
+
+                <!-- Color 2 - Teal -->
+                <div class="color-group">
+                    <label>Deep Teal</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color2" value="#00ced1" onchange="updateColor('color2', this.value)">
+                        <span class="color-value" id="color2-value">#00ced1</span>
+                    </div>
+                </div>
+
+                <!-- Color 3 - Aqua -->
+                <div class="color-group">
+                    <label>Bright Aqua</label>
+                    <div class="color-picker-container">
+                        <input type="color" id="color3" value="#7fffd4" onchange="updateColor('color3', this.value)">
+                        <span class="color-value" id="color3-value">#7fffd4</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Actions Section -->
+            <div class="control-section">
+                <h3>Actions</h3>
+                <div class="button-row" style="margin-bottom: 8px;">
+                    <button class="button" onclick="resetParameters()">Reset</button>
+                    <button class="button secondary" onclick="downloadArt()">Download PNG</button>
+                </div>
+                <button class="button tertiary" onclick="saveLastSettings()" id="save-btn"
+                    style="background: var(--anthropic-orange); margin-bottom: 0;">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- Resizer Handle -->
+        <div class="resizer hidden" id="sidebar-resizer"></div>
+
+        <!-- Main Canvas Area -->
+        <div class="canvas-area">
+            <div id="canvas-container">
+                <div class="loading">Initializing luminous particle field...</div>
+            </div>
+            <div class="interaction-hint">Move cursor to create vortex • Click to burst</div>
+        </div>
+    </div>
+
+    <script>
+        // ═══════════════════════════════════════════════════════════════════════
+        // LUMINOUS RESONANCE - GENERATIVE ART PARAMETERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let params = {
+            seed: 12345,
+            particleCount: 6500,
+            flowSpeed: 1.5,
+            noiseScale: 0.001,
+            trailPersistence: 0.9,
+            attractionForce: 0.3,
+            attractionRange: 600,
+            repulsionForce: 5,
+            particleSize: 2.5,
+            colorPalette: ['#00ffff', '#00ced1', '#7fffd4']
+        };
+
+        let defaultParams = { ...params };
+
+        // Image color mapping variables
+        let uploadedImage = null;
+        let useImageColors = false;
+        let imageColors = null;
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // P5.JS PARTICLE SYSTEM - LUMINOUS RESONANCE
+        // ═══════════════════════════════════════════════════════════════════════
+
+        let particles = [];
+        let canvasScaleX = 1;
+        let canvasScaleY = 1;
+        let hueShift = 0;
+        let timeOffset = 0;
+
+        function setup() {
+            let canvas = createCanvas(1920, 1080);
+            canvas.parent('canvas-container');
+
+            // Set dark background for luminous effect
+            background(5, 5, 10);
+
+            initializeParticles();
+
+            // Remove loading message
+            const loading = document.querySelector('.loading');
+            if (loading) loading.style.display = 'none';
+
+            // Hide interaction hint after 5 seconds
+            setTimeout(() => {
+                const hint = document.querySelector('.interaction-hint');
+                if (hint) hint.style.opacity = '0';
+            }, 5000);
+
+            // Track canvas scaling for accurate mouse coordinates
+            // Delay slightly to ensure canvas is fully rendered
+            setTimeout(updateCanvasScale, 50);
+            setTimeout(updateCanvasScale, 100);
+            setTimeout(updateCanvasScale, 500);
+            window.addEventListener('resize', updateCanvasScale);
+            window.addEventListener('scroll', updateCanvasScale);
+        }
+
+        function updateCanvasScale() {
+            let canvasElement = document.querySelector('#canvas-container canvas');
+            if (canvasElement) {
+                let rect = canvasElement.getBoundingClientRect();
+                canvasScaleX = width / rect.width;
+                canvasScaleY = height / rect.height;
+            }
+        }
+
+        function getMousePos() {
+            // p5.js automatically handles coordinate mapping between DOM canvas 
+            // and internal resolution (1920x1080). Manual scaling causes offset.
+            return {
+                x: mouseX,
+                y: mouseY
+            };
+        }
+
+        function mousePressed() {
+            // Apply repulsion force on click - increased range for larger canvas
+            let mousePos = getMousePos();
+            let repulsionRange = 500; // Larger range for 1920x1080 canvas
+
+            for (let particle of particles) {
+                let dx = particle.x - mousePos.x;
+                let dy = particle.y - mousePos.y;
+                let dist = sqrt(dx * dx + dy * dy);
+
+                if (dist < repulsionRange && dist > 0) {
+                    // Strong repulsion force
+                    let forceMagnitude = (params.repulsionForce * 800) / (dist * dist + 10);
+                    forceMagnitude = constrain(forceMagnitude, 0, 20);
+
+                    particle.vx += (dx / dist) * forceMagnitude;
+                    particle.vy += (dy / dist) * forceMagnitude;
+                }
+            }
+        }
+
+        function initializeParticles() {
+            // Seed the randomness for reproducibility
+            randomSeed(params.seed);
+            noiseSeed(params.seed);
+
+            // Clear and recreate particles
+            particles = [];
+
+            for (let i = 0; i < params.particleCount; i++) {
+                particles.push(new LuminousParticle());
+            }
+        }
+
+        function draw() {
+            // Periodically update canvas scale (every 60 frames ≈ 1 second)
+            if (frameCount % 60 === 0) {
+                updateCanvasScale();
+            }
+
+            // Create trail effect with controlled persistence
+            noStroke();
+            // Higher minimum alpha ensures trails don't form static patterns
+            // Alpha is inversely proportional to trailPersistence
+            let alpha = constrain((1 - params.trailPersistence) * 255, 20, 255);
+            fill(5, 5, 10, alpha);
+            rect(0, 0, width, height);
+
+            // Update time offset for noise animation
+            timeOffset += 0.003 * params.flowSpeed;
+
+            // Update hue shift for color variation
+            hueShift += 0.2;
+
+            // Update and display all particles
+            for (let particle of particles) {
+                particle.update();
+                particle.display();
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // LUMINOUS PARTICLE CLASS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        class LuminousParticle {
+            constructor() {
+                this.reset();
+                // Random starting position
+                this.x = random(width);
+                this.y = random(height);
+            }
+
+            reset() {
+                // Respawn at edges
+                const edge = floor(random(4));
+                switch (edge) {
+                    case 0: // Top
+                        this.x = random(width);
+                        this.y = -10;
+                        break;
+                    case 1: // Right
+                        this.x = width + 10;
+                        this.y = random(height);
+                        break;
+                    case 2: // Bottom
+                        this.x = random(width);
+                        this.y = height + 10;
+                        break;
+                    case 3: // Left
+                        this.x = -10;
+                        this.y = random(height);
+                        break;
+                }
+
+                // Initialize velocity with random direction
+                this.vx = random(-1, 1);
+                this.vy = random(-1, 1);
+
+                // Particle properties
+                this.maxSpeed = random(2.5, 5.0); // Increased for faster response
+                this.baseSize = random(0.8, 1.5);
+                this.life = random(0.5, 1);
+                this.colorIndex = floor(random(params.colorPalette.length));
+                this.brightness = random(180, 255);
+            }
+
+            update() {
+                // Get noise-based flow direction
+                let noiseAngle = noise(
+                    this.x * params.noiseScale,
+                    this.y * params.noiseScale,
+                    timeOffset
+                ) * TWO_PI * 2;
+
+                // Base flow force
+                let flowForce = p5.Vector.fromAngle(noiseAngle);
+                flowForce.mult(0.3);
+
+                // Apply flow force to velocity
+                this.vx += flowForce.x * 0.1 * params.flowSpeed;
+                this.vy += flowForce.y * 0.1 * params.flowSpeed;
+
+                // Cursor vortex effect
+                let mousePos = getMousePos();
+                let dx = mousePos.x - this.x;
+                let dy = mousePos.y - this.y;
+                let distToMouse = sqrt(dx * dx + dy * dy);
+
+                if (distToMouse < params.attractionRange && distToMouse > 0) {
+                    // Calculate normalized distance and angle
+                    let normalizedDist = distToMouse / params.attractionRange;
+                    let angleToMouse = atan2(dy, dx);
+
+                    // Radial force (attraction toward center) - stronger when closer
+                    let radialForce = params.attractionForce * (1 - normalizedDist) * 2.5;
+                    radialForce = constrain(radialForce, 0, 6);
+
+                    // Tangential force (rotation) - creates vortex effect
+                    // Tangent direction is perpendicular to radial direction
+                    let tangentForce = params.attractionForce * (1 - normalizedDist) * 3;
+                    tangentForce = constrain(tangentForce, 0, 8);
+
+                    // Apply radial force (attraction to center)
+                    this.vx += cos(angleToMouse) * radialForce;
+                    this.vy += sin(angleToMouse) * radialForce;
+
+                    // Apply tangential force (rotation around center)
+                    // Rotate 90 degrees counter-clockwise: -sin, cos
+                    this.vx += -sin(angleToMouse) * tangentForce;
+                    this.vy += cos(angleToMouse) * tangentForce;
+
+                    // Increase brightness when near cursor
+                    this.brightness = min(255, this.brightness + 4);
+                } else {
+                    // Gradually return to base brightness
+                    this.brightness = lerp(this.brightness, random(180, 220), 0.01);
+                }
+
+                // Limit velocity - allow higher speeds in vortex
+                let speed = sqrt(this.vx * this.vx + this.vy * this.vy);
+                let effectiveMaxSpeed = this.maxSpeed * 1.5; // Increase max speed for vortex
+                if (speed > effectiveMaxSpeed) {
+                    this.vx = (this.vx / speed) * effectiveMaxSpeed;
+                    this.vy = (this.vy / speed) * effectiveMaxSpeed;
+                }
+
+                // Update position
+                this.x += this.vx * params.flowSpeed;
+                this.y += this.vy * params.flowSpeed;
+
+                // Wrap around edges or respawn
+                if (this.x < -50 || this.x > width + 50 ||
+                    this.y < -50 || this.y > height + 50) {
+                    this.reset();
+                }
+
+                // Reduced velocity decay for faster, more responsive movement
+                this.vx *= 0.995;
+                this.vy *= 0.995;
+
+                // Update life cycle
+                this.life -= 0.0005;
+                if (this.life <= 0) {
+                    this.reset();
+                }
+            }
+
+            display() {
+                // Calculate color based on velocity and palette or image
+                let speed = sqrt(this.vx * this.vx + this.vy * this.vy);
+                let baseColor;
+
+                // Use image color if available and enabled
+                if (useImageColors && imageColors) {
+                    let imgX = floor(map(this.x, 0, width, 0, uploadedImage.width));
+                    let imgY = floor(map(this.y, 0, height, 0, uploadedImage.height));
+                    imgX = constrain(imgX, 0, uploadedImage.width - 1);
+                    imgY = constrain(imgY, 0, uploadedImage.height - 1);
+                    let pixelIndex = (imgY * uploadedImage.width + imgX) * 4;
+                    baseColor = color(
+                        imageColors[pixelIndex],
+                        imageColors[pixelIndex + 1],
+                        imageColors[pixelIndex + 2]
+                    );
+                } else {
+                    let colorHex = params.colorPalette[this.colorIndex];
+                    baseColor = color(colorHex);
+                }
+
+                // Modify color based on velocity (faster = brighter)
+                let brightnessBoost = map(speed, 0, this.maxSpeed, 0, 100);
+                let alpha = map(this.life, 0, 1, 100, 255);
+
+                // Extract RGB and boost brightness
+                let r = red(baseColor);
+                let g = green(baseColor);
+                let b = blue(baseColor);
+
+                // Apply velocity-based brightness boost
+                r = min(255, r + brightnessBoost * 0.5);
+                g = min(255, g + brightnessBoost * 0.3);
+                b = min(255, b + brightnessBoost * 0.7);
+
+                // Draw particle with glow
+                noStroke();
+
+                // Outer glow
+                let glowSize = this.baseSize * params.particleSize * 3;
+                let glowAlpha = alpha * 0.15;
+                fill(r, g, b, glowAlpha);
+                ellipse(this.x, this.y, glowSize, glowSize);
+
+                // Inner core
+                let coreSize = this.baseSize * params.particleSize;
+                let coreAlpha = alpha * 0.8;
+                fill(r, g, b, coreAlpha);
+                ellipse(this.x, this.y, coreSize, coreSize);
+
+                // Bright center for luminous effect
+                if (speed > 1.5) {
+                    fill(255, 255, 255, alpha * 0.9);
+                    ellipse(this.x, this.y, coreSize * 0.5, coreSize * 0.5);
+                }
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // UI CONTROL HANDLERS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateParam(paramName, value) {
+            let numValue = parseFloat(value);
+            params[paramName] = numValue;
+            document.getElementById(paramName + '-value').textContent = value;
+
+            // Reinitialize particles if count changed
+            if (paramName === 'particleCount') {
+                initializeParticles();
+            }
+        }
+
+        function updateColor(colorId, value) {
+            let index = parseInt(colorId.replace('color', '')) - 1;
+            params.colorPalette[index] = value;
+            document.getElementById(colorId + '-value').textContent = value;
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // SEED CONTROL FUNCTIONS
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function updateSeedDisplay() {
+            document.getElementById('seed-input').value = params.seed;
+        }
+
+        function updateSeed() {
+            let input = document.getElementById('seed-input');
+            let newSeed = parseInt(input.value);
+            if (newSeed && newSeed > 0) {
+                params.seed = newSeed;
+                initializeParticles();
+                background(5, 5, 10);
+            } else {
+                updateSeedDisplay();
+            }
+        }
+
+        function previousSeed() {
+            params.seed = Math.max(1, params.seed - 1);
+            updateSeedDisplay();
+            initializeParticles();
+            background(5, 5, 10);
+        }
+
+        function nextSeed() {
+            params.seed = params.seed + 1;
+            updateSeedDisplay();
+            initializeParticles();
+            background(5, 5, 10);
+        }
+
+        function randomSeedAndUpdate() {
+            params.seed = Math.floor(Math.random() * 999999) + 1;
+            updateSeedDisplay();
+            initializeParticles();
+            background(5, 5, 10);
+        }
+
+        function resetParameters() {
+            params = { ...defaultParams };
+
+            // Update all parameter UI elements
+            const paramIds = ['particleCount', 'flowSpeed', 'noiseScale',
+                'trailPersistence', 'attractionForce', 'attractionRange',
+                'repulsionForce', 'particleSize'];
+
+            for (let id of paramIds) {
+                document.getElementById(id).value = params[id];
+                document.getElementById(id + '-value').textContent = params[id];
+            }
+
+            // Reset colors
+            for (let i = 0; i < params.colorPalette.length; i++) {
+                let colorId = 'color' + (i + 1);
+                document.getElementById(colorId).value = params.colorPalette[i];
+                document.getElementById(colorId + '-value').textContent = params.colorPalette[i];
+            }
+
+            // Reset image color toggle
+            useImageColors = false;
+            document.getElementById('useImageColors').checked = false;
+
+            updateSeedDisplay();
+            initializeParticles();
+            background(5, 5, 10);
+        }
+
+        function downloadArt() {
+            saveCanvas('luminous-resonance-seed-' + params.seed, 'png');
+        }
+
+        function saveLastSettings() {
+            const settings = {
+                params: params,
+                resolution: {
+                    preset: document.getElementById('res-select').value,
+                    w: document.getElementById('custom-w').value,
+                    h: document.getElementById('custom-h').value
+                },
+                sidebarWidth: lastSidebarWidth
+            };
+            localStorage.setItem('luminous_resonance_settings', JSON.stringify(settings));
+
+            // Visual feedback
+            const saveBtn = document.getElementById('save-btn');
+            const originalText = saveBtn.textContent;
+            saveBtn.textContent = 'Settings Saved!';
+            saveBtn.style.background = '#22c55e'; // Green
+            setTimeout(() => {
+                saveBtn.textContent = originalText;
+                saveBtn.style.background = '';
+            }, 2000);
+        }
+
+        function loadLastSettings() {
+            const saved = localStorage.getItem('luminous_resonance_settings');
+            if (!saved) return;
+
+            try {
+                const settings = JSON.parse(saved);
+
+                // 1. Restore Params
+                if (settings.params) {
+                    params = { ...params, ...settings.params };
+
+                    // Update UI Sliders and Displays
+                    const sliders = [
+                        'particleCount', 'flowSpeed', 'noiseScale',
+                        'trailPersistence', 'attractionForce',
+                        'attractionRange', 'repulsionForce', 'particleSize'
+                    ];
+                    sliders.forEach(id => {
+                        const val = params[id];
+                        const el = document.getElementById(id);
+                        if (el) el.value = val;
+                        const display = document.getElementById(id + '-value');
+                        if (display) display.textContent = val;
+                    });
+
+                    // Update Seed
+                    updateSeedDisplay();
+
+                    // Update Colors
+                    params.colorPalette.forEach((hex, i) => {
+                        const id = `color${i + 1}`;
+                        const el = document.getElementById(id);
+                        if (el) el.value = hex;
+                        const display = document.getElementById(id + '-value');
+                        if (display) display.textContent = hex;
+                    });
+                }
+
+                // 2. Restore Resolution
+                if (settings.resolution) {
+                    document.getElementById('res-select').value = settings.resolution.preset;
+                    document.getElementById('custom-w').value = settings.resolution.w;
+                    document.getElementById('custom-h').value = settings.resolution.h;
+
+                    if (settings.resolution.preset !== 'custom') {
+                        changeResolution(settings.resolution.preset);
+                    } else {
+                        applyCustomRes();
+                    }
+                }
+
+                // 3. Restore Sidebar Width
+                if (settings.sidebarWidth) {
+                    lastSidebarWidth = settings.sidebarWidth;
+                }
+
+                // Re-initialize particles with loaded count if necessary
+                initializeParticles();
+
+            } catch (e) {
+                console.error("Failed to load settings:", e);
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════════
+        // IMAGE UPLOAD AND COLOR MAPPING
+        // ═══════════════════════════════════════════════════════════════════════
+
+        function handleImageUpload(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function (e) {
+                let img = new Image();
+                img.onload = function () {
+                    uploadedImage = img;
+                    extractImageColors();
+
+                    // Show image info
+                    document.getElementById('image-info').style.display = 'block';
+                    document.getElementById('image-name').textContent = file.name;
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function extractImageColors() {
+            if (!uploadedImage) return;
+
+            // Create a temporary canvas to extract pixel data
+            let tempCanvas = document.createElement('canvas');
+            let tempCtx = tempCanvas.getContext('2d');
+            tempCanvas.width = uploadedImage.width;
+            tempCanvas.height = uploadedImage.height;
+            tempCtx.drawImage(uploadedImage, 0, 0);
+
+            // Get pixel data
+            let imageData = tempCtx.getImageData(0, 0, uploadedImage.width, uploadedImage.height);
+            imageColors = imageData.data;
+        }
+
+        function toggleImageColors(checked) {
+            useImageColors = checked;
+        }
+
+        function changeResolution(res) {
+            if (res === 'custom') return;
+            let [w, h] = res.split('x').map(Number);
+            document.getElementById('custom-w').value = w;
+            document.getElementById('custom-h').value = h;
+            resizeCanvas(w, h);
+            background(5, 5, 10);
+            updateCanvasScale();
+        }
+
+        function applyCustomRes() {
+            let w = parseInt(document.getElementById('custom-w').value);
+            let h = parseInt(document.getElementById('custom-h').value);
+            if (w > 0 && h > 0) {
+                document.getElementById('res-select').value = 'custom';
+                resizeCanvas(w, h);
+                background(5, 5, 10);
+                updateCanvasScale();
+            }
+        }
+
+        let isSidebarDragging = false;
+        let lastSidebarWidth = 350;
+
+        function toggleSidebar() {
+            const sidebar = document.getElementById('settings-sidebar');
+            const toggleBtn = document.getElementById('toggle-sidebar');
+            const resizer = document.getElementById('sidebar-resizer');
+            const isCollapsed = sidebar.classList.toggle('collapsed');
+
+            if (isCollapsed) {
+                toggleBtn.querySelector('span').textContent = 'Open Settings';
+                toggleBtn.classList.remove('active');
+                resizer.classList.add('hidden');
+            } else {
+                toggleBtn.querySelector('span').textContent = 'Hide Settings';
+                toggleBtn.classList.add('active');
+                resizer.classList.remove('hidden');
+                sidebar.style.setProperty('--sidebar-width', lastSidebarWidth + 'px');
+            }
+
+            // Re-calculate canvas scale after sidebar transition
+            setTimeout(updateCanvasScale, 310);
+        }
+
+        // Initialize UI and Draggable logic on load
+        window.addEventListener('load', function () {
+            // Priority 1: Load saved settings (this updates params and lastSidebarWidth)
+            loadLastSettings();
+
+            // Priority 2: Update UI elements
+            updateSeedDisplay();
+
+            const sidebar = document.getElementById('settings-sidebar');
+            const resizer = document.getElementById('sidebar-resizer');
+
+            // Ensure sidebar starts in a consistent state
+            sidebar.classList.add('collapsed');
+            resizer.classList.add('hidden');
+            sidebar.style.setProperty('--sidebar-width', lastSidebarWidth + 'px');
+
+            // Draggable logic
+            resizer.addEventListener('mousedown', function (e) {
+                isSidebarDragging = true;
+                document.body.style.cursor = 'col-resize';
+                resizer.classList.add('dragging');
+                e.preventDefault();
+            });
+
+            document.addEventListener('mousemove', function (e) {
+                if (!isSidebarDragging) return;
+
+                let newWidth = e.clientX;
+                if (newWidth < 250) newWidth = 250;
+                if (newWidth > 600) newWidth = 600;
+
+                lastSidebarWidth = newWidth;
+                sidebar.style.setProperty('--sidebar-width', newWidth + 'px');
+                updateCanvasScale();
+            });
+
+            document.addEventListener('mouseup', function () {
+                if (isSidebarDragging) {
+                    isSidebarDragging = false;
+                    document.body.style.cursor = 'default';
+                    resizer.classList.remove('dragging');
+                    updateCanvasScale();
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>

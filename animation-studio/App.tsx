@@ -4,7 +4,7 @@ import { MaterialList } from './components/MaterialList';
 import { PreviewWindow } from './components/PreviewWindow';
 import { AnimationMaterial, MaterialStatus } from './types';
 import { PhysicalLedController } from './components/LedPreview';
-import { Box, LayoutDashboard, ArrowLeft } from 'lucide-react';
+import { Box, LayoutDashboard, ArrowLeft, Settings2, Menu, X, PanelLeftOpen, PanelLeftClose } from 'lucide-react';
 
 // Helper to generate a unique ID
 const generateId = () => Math.random().toString(36).substr(2, 9);
@@ -12,7 +12,7 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 const App: React.FC = () => {
   const [materials, setMaterials] = useState<AnimationMaterial[]>([]);
   const [activeMaterialId, setActiveMaterialId] = useState<string | null>(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Mock function to simulate FFmpeg parsing and thumbnail generation
   const processMaterial = async (id: string, file: File) => {
@@ -132,48 +132,63 @@ const App: React.FC = () => {
         <span>返回导览</span>
       </a>
 
+      {/* 设置切换按钮 */}
+      <button
+        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+        className={`fixed top-6 z-[100] flex items-center gap-2 px-4 py-2.5 rounded-lg border text-sm font-medium transition-all duration-300 shadow-[0_4px_12px_rgba(0,0,0,0.2)] backdrop-blur-[10px] ${isSidebarOpen
+          ? 'left-[466px] bg-led-500 text-white border-led-400 hover:bg-led-400'
+          : 'left-[180px] bg-[rgba(15,40,71,0.6)] text-led-accent border-[rgba(6,182,212,0.3)] hover:bg-[rgba(15,40,71,0.8)]'
+          }`}
+        style={{ WebkitBackdropFilter: 'blur(10px)' }}
+      >
+        {isSidebarOpen ? <PanelLeftClose className="w-[18px] h-[18px]" /> : <PanelLeftOpen className="w-[18px] h-[18px]" />}
+        <span>{isSidebarOpen ? '隐藏设置' : '打开设置'}</span>
+      </button>
+
       {/* Sidebar / Upload Area */}
-      <div className="w-[450px] flex flex-col border-r border-led-700 bg-led-900/50 backdrop-blur flex-shrink-0 z-20">
-        <div className="h-16 flex items-center px-6 border-b border-led-700 bg-transparent">
-          {/* 标题已移动到预览控制台上方 */}
-        </div>
+      <div
+        className={`transition-all duration-300 ease-in-out flex flex-col border-r border-led-700 bg-led-900/50 backdrop-blur flex-shrink-0 z-20 h-screen overflow-hidden ${isSidebarOpen ? 'w-[450px] opacity-100' : 'w-0 opacity-0 border-none'
+          }`}
+      >
+        <div className="w-[450px] flex flex-col h-full min-h-0">
+          <div className="h-20 flex-shrink-0"></div> {/* Spacer for fixed buttons */}
 
-        <div className="flex-1 overflow-y-auto p-6 scrollbar-thin">
-          <section className="mb-8">
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-led-accent"></span>
-              素材上传
-            </h2>
-            <UploadZone onFilesSelected={handleFilesSelected} />
-          </section>
+          <div className="flex-1 overflow-y-auto p-6 scrollbar-thin min-h-0">
+            <section className="mb-8">
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-led-accent"></span>
+                素材上传
+              </h2>
+              <UploadZone onFilesSelected={handleFilesSelected} />
+            </section>
 
-          <section>
-            <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-led-500"></span>
-              素材库 ({materials.length})
-            </h2>
-            <MaterialList
-              materials={materials}
-              activeId={activeMaterialId}
-              onSelect={setActiveMaterialId}
-              onDelete={handleDelete}
-              onApply={handleApply}
-            />
-          </section>
-        </div>
+            <section>
+              <h2 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-led-500"></span>
+                素材库 ({materials.length})
+              </h2>
+              <MaterialList
+                materials={materials}
+                activeId={activeMaterialId}
+                onSelect={setActiveMaterialId}
+                onDelete={handleDelete}
+                onApply={handleApply}
+              />
+            </section>
+          </div>
 
-        {/* Connection Status Footer */}
-        <div className="p-4 border-t border-led-700 bg-led-800/50 text-xs text-slate-500 flex justify-between items-center">
-          <span className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-            控制器在线
-          </span>
-          <span className="font-mono">IP: 192.168.1.102</span>
+          {/* Connection Status Footer */}
+          <div className="p-4 border-t border-led-700 bg-led-800/50 text-xs text-slate-500 flex justify-between items-center">
+            <span className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+              控制器在线
+            </span>
+          </div>
         </div>
       </div>
 
       {/* Main Preview Area */}
-      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-b from-led-900 to-led-800 p-8">
+      <div className="flex-1 flex flex-col min-w-0 bg-gradient-to-b from-led-900 to-led-800 pt-24 pb-8 px-8">
         <div className="flex justify-between items-center mb-6 relative">
           <div className="flex-1">
             <h2 className="text-2xl font-bold text-white mb-1">预览控制台</h2>

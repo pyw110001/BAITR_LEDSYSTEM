@@ -573,23 +573,23 @@
                     </div>
                 </div>
 
-                <!-- 系统设置 -->
-                <div class="function-card" data-function="system">
+
+                <!-- 交互特效 (NEW) -->
+                <div class="function-card" data-function="interaction">
                     <div class="function-card-content">
-                        <div class="function-icon-wrapper icon-gradient-green">
-                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <div class="function-icon-wrapper"
+                            style="background: linear-gradient(135deg, #d97757 0%, #6a9bcc 100%);">
+                            <svg class="function-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"
+                                stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
                             </svg>
                         </div>
-                        <h3 class="function-title">系统设置</h3>
-                        <p class="function-description">管理系统参数和设备配置</p>
-                        <button class="function-button">配置</button>
+                        <h3 class="function-title">交互特效</h3>
+                        <p class="function-description">Luminous Resonance 粒子交互系统</p>
+                        <button class="function-button">进入</button>
                         <div class="function-tag">
-                            <span class="tag-text">System</span>
-                            <div class="tag-dot"></div>
+                            <span class="tag-text">Effect</span>
+                            <div class="tag-dot" style="background: #d97757;"></div>
                         </div>
                     </div>
                 </div>
@@ -646,6 +646,10 @@
                 case 'animation':
                     // 跳转到动画播放页面 (使用统一的 8001 端口下的 wrapper)
                     transitionToPage('animation.html');
+                    break;
+                case 'interaction':
+                    // 跳转到交互特效页面
+                    transitionToPage('Luminous_Resonance.html');
                     break;
                 case 'system':
                     alert('系统设置功能开发中...');

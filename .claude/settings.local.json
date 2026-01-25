@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git checkout:*)",
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Skill(vercel-react-best-practices)",
+      "Skill(vercel-react-best-practices:*)",
+      "Bash(where:*)",
+      "Bash(npm i:*)",
+      "Bash(vercel:*)",
+      "Bash(pnpm run animation:build:*)"
+    ]
+  }
+}

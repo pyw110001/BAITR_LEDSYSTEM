@@ -5256,6 +5256,7 @@ function startStaticServer(options = {}) {
       filePath = "./login.html";
     }
     filePath = filePath.split("?")[0];
+    let fullPath;
     if (filePath === "./animation.html") {
       fullPath = import_path2.default.join(PROJECT_ROOT, "public/dist-animation/index.html");
     } else if (filePath.startsWith("./assets/") && !import_fs.default.existsSync(import_path2.default.join(PROJECT_ROOT, "public", filePath))) {
